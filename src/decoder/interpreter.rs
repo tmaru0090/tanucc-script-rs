@@ -31,12 +31,48 @@ use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
 use std::time::UNIX_EPOCH;
+use symphonia::core::formats::FormatOptions;
+use symphonia::core::io::MediaSourceStream;
+use symphonia::core::meta::MetadataOptions;
+use symphonia::core::probe::Hint;
+use symphonia::default::get_codecs;
+use symphonia::default::get_probe;
 use uuid::Uuid;
 use whoami;
 use win_msgbox::{
     AbortRetryIgnore, CancelTryAgainContinue, Icon, MessageBox, Okay, OkayCancel, RetryCancel,
     YesNo, YesNoCancel,
 };
+
+fn get_duration(file_path: &str) -> Option<Duration> {
+    // ファイルを開く
+    let file = File::open(file_path).ok()?;
+    let mss = MediaSourceStream::new(Box::new(file), Default::default());
+
+    // ファイル形式を推定
+    let hint = Hint::new();
+    let format_opts = FormatOptions::default(); // FormatOptions に修正
+    let metadata_opts = MetadataOptions::default(); // MetadataOptionsも使用可能
+
+    let probed = get_probe()
+        .format(&hint, mss, &format_opts, &metadata_opts)
+        .ok()?; // FormatOptionsとMetadataOptionsを使用
+
+    // デコーダを作成
+    let format = probed.format;
+
+    // トラックを取得
+    let track = format.tracks().get(0)?;
+
+    // サンプル数を計算
+    let sample_rate = track.codec_params.sample_rate?;
+    let samples = track.codec_params.n_frames?;
+
+    // 長さを計算
+    let duration = Duration::from_secs_f64(samples as f64 / sample_rate as f64);
+
+    Some(duration)
+}
 
 fn show_messagebox(
     message_type: &str,
@@ -171,8 +207,8 @@ impl Decoder {
         self
     }
 
-fn generate_html_from_comments(&mut self) -> String {
-    let mut html = String::from(
+    fn generate_html_from_comments(&mut self) -> String {
+        let mut html = String::from(
         "<!DOCTYPE html>\n<html>\n<head>\n<title>Comments</title>\n<style>\n\
         body { font-family: Arial, sans-serif; }\n\
         .comment-container { margin: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }\n\
@@ -194,42 +230,50 @@ fn generate_html_from_comments(&mut self) -> String {
         </style>\n</head>\n<body>\n",
     );
 
-    // ダークモード切替ボタンの追加
-    html.push_str(
-        "<button onclick=\"toggleDarkMode()\">Toggle Dark Mode</button>\n\
+        // ダークモード切替ボタンの追加
+        html.push_str(
+            "<button onclick=\"toggleDarkMode()\">Toggle Dark Mode</button>\n\
         <div id=\"search-container\">\n\
         <input type=\"text\" id=\"search-box\" placeholder=\"Search comments...\"></input>\n\
         </div>\n",
-    );
+        );
 
-    html.push_str("<div id=\"comments\">\n");
+        html.push_str("<div id=\"comments\">\n");
 
-    // コメントを行ごとに処理
-    for ((line, column), comments) in &self.context.comment_lists {
-        html.push_str(&format!(
+        // コメントを行ごとに処理
+        for ((line, column), comments) in &self.context.comment_lists {
+            html.push_str(&format!(
             "<div class=\"comment-container\">\n\
             <a href=\"#\" class=\"comment-link\" onclick=\"toggleComments({},{})\">Line {} Column {}</a>\n",
             line, column, line, column
         ));
 
-        html.push_str("<div id=\"comments-");
-        html.push_str(&format!("{:02}-{:02}\" class=\"slide hide\">", line, column));
-        for comment in comments {
-            html.push_str(&format!("<div class=\"comment\" data-comment=\"{}\">{}</div>\n", comment, comment));
+            html.push_str("<div id=\"comments-");
+            html.push_str(&format!(
+                "{:02}-{:02}\" class=\"slide hide\">",
+                line, column
+            ));
+            for comment in comments {
+                html.push_str(&format!(
+                    "<div class=\"comment\" data-comment=\"{}\">{}</div>\n",
+                    comment, comment
+                ));
+            }
+            html.push_str("</div>\n</div>\n");
         }
-        html.push_str("</div>\n</div>\n");
-    }
 
-    // ページネーション
-    html.push_str("<div class=\"pagination\">\n\
+        // ページネーション
+        html.push_str(
+            "<div class=\"pagination\">\n\
         <a href=\"#\" class=\"active\">1</a>\n\
         <a href=\"#\">2</a>\n\
         <a href=\"#\">3</a>\n\
         <!-- Add more pages as needed -->\n\
-        </div>\n");
+        </div>\n",
+        );
 
-    // JavaScriptでコメント表示を制御、検索機能、ダークモード切り替え、ページネーション
-    html.push_str(
+        // JavaScriptでコメント表示を制御、検索機能、ダークモード切り替え、ページネーション
+        html.push_str(
         "<script>\n\
         function toggleComments(line, column) {\n\
             var commentsDiv = document.getElementById('comments-' + String(line).padStart(2, '0') + '-' + String(column).padStart(2, '0'));\n\
@@ -263,12 +307,10 @@ fn generate_html_from_comments(&mut self) -> String {
         </script>\n"
     );
 
-    html.push_str("</body>\n</html>");
+        html.push_str("</body>\n</html>");
 
-    html
-}
-    
-
+        html
+    }
 
     // 現在のASTのマップの先頭に指定スクリプトのASTを追加
     pub fn add_first_ast_from_file(&mut self, file_name: &str) -> R<&mut Self, String> {
@@ -533,7 +575,7 @@ fn generate_html_from_comments(&mut self) -> String {
             // Nodeのイテレータを使用してノードを処理
             for current_node in node.iter() {
                 self.current_node = Some((file_name.clone(), Box::new(current_node.clone())));
-                if let NodeValue::EndStatement = current_node.value {
+                if let NodeValue::EndStatement | NodeValue::Null = current_node.value {
                     continue;
                 }
                 value = self.execute_node(current_node)?;
@@ -546,7 +588,7 @@ fn generate_html_from_comments(&mut self) -> String {
             self.add_ast_from_text("main-entry", &format!("{}();", self.entry_func.1))?;
             if let Some((_, value_node)) = self.ast_map.clone().iter().last() {
                 for current_node in value_node.iter() {
-                    if let NodeValue::EndStatement = current_node.value {
+                    if let NodeValue::EndStatement | NodeValue::Null = current_node.value {
                         continue;
                     }
                     value = self.execute_node(current_node)?;
@@ -653,10 +695,15 @@ fn generate_html_from_comments(&mut self) -> String {
 
         // 各値を評価し、型チェックを行う
         let mut array = Vec::new();
-        for value in values {
-            let v_value = self.execute_node(&*value)?;
-            //self.check_type(&v_value, v_type.as_str().unwrap_or(""))?;
-            array.push(v_value);
+        for _value in values {
+            for value in _value.iter() {
+                let v_value = self.execute_node(&*value)?;
+                if v_value == Value::Null {
+                    continue;
+                }
+                //self.check_type(&v_value, v_type.as_str().unwrap_or(""))?;
+                array.push(v_value);
+            }
         }
 
         // 配列全体をヒープにコピー
@@ -832,22 +879,27 @@ fn generate_html_from_comments(&mut self) -> String {
                         }
                         let file_path = match self.execute_node(&args[0])? {
                             Value::String(v) => v,
-                            _ => {
-                                return Err("show_msg_box expects a string as the file name".into())
-                            }
+                            _ => return Err("play_music expects a string as the file name".into()),
                         };
+
                         // 出力ストリームを作成
                         let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+                        let file = File::open(file_path.clone()).unwrap();
+
                         // 音楽ファイルを読み込む
-                        let file = File::open(file_path).unwrap();
                         let source = rodio::Decoder::new(BufReader::new(file)).unwrap();
+
                         // 音楽の長さを取得
-                        let duration = source.total_duration().unwrap();
+                        let duration = get_duration(&file_path).unwrap_or_else(|| {
+                            // 長さが取れない場合は rodio で推定
+                            source.total_duration().unwrap()
+                        });
 
                         // 音楽を再生
-                        stream_handle.play_raw(source.convert_samples()).unwrap();
+                        let sink = rodio::Sink::try_new(&stream_handle).unwrap();
+                        sink.append(source);
 
-                        // 音楽が再生される間、プログラムを終了させない
+                        // 再生中にスリープ
                         std::thread::sleep(duration);
                         return Ok(Value::Null);
                     }
@@ -2102,58 +2154,166 @@ fn generate_html_from_comments(&mut self) -> String {
             _ => Ok(Value::Null),
         }
     }
+    pub fn eval_impl_statement(
+        &mut self,
+        name: &String,
+        members: &Vec<Box<Node>>,
+    ) -> Result<Value, String> {
+        // グローバルコンテキストへのアクセス
+        let context = &mut self.context.global_context;
 
+        // 既に構造体が定義されているかチェック
+        if !context.contains_key(name) {
+            return Err(format!(
+                "Struct '{}' is not defined. Please define the struct before implementing.",
+                name
+            ));
+        }
+
+        // 既存の構造体を取得
+        let struct_var = context.get_mut(name).unwrap();
+
+        // 変数が`serde_json::Map`であることを確認し、`HashMap`に変換
+        let mut structs_map: HashMap<String, Value> = match &struct_var.value {
+            Value::Object(map) => map.clone().into_iter().collect(), // 変換処理
+            _ => {
+                return Err(format!(
+                    "The value associated with '{}' is not a HashMap.",
+                    name
+                ));
+            }
+        };
+
+        // メンバーをイテレートしてマッピングを作成
+        let member_map: HashMap<String, Value> = members
+            .iter()
+            .filter_map(|m| {
+                // `m.node_value()` で NodeValue を取得
+                let node_value = &m.value();
+                match node_value {
+                    NodeValue::Declaration(Declaration::Function(
+                        func_name,
+                        args,
+                        body,
+                        return_type,
+                        _is_system,
+                    )) => {
+                        // メンバー名を関数名とする
+                        let member_name = func_name.clone();
+
+                        // 関数の引数、戻り値の型と本体を取得
+                        let function_info = serde_json::json!({
+                            "args": args,
+                            "return_type": return_type,
+                            "body": body,
+                        });
+
+                        Some((member_name, function_info))
+                    }
+                    _ => None, // Function 以外はスキップ
+                }
+            })
+            .collect();
+
+        // 既存の`HashMap`に新しいメンバーを追加
+        structs_map.extend(member_map);
+
+        // 更新した構造体をグローバルコンテキストに戻す
+        struct_var.value = serde_json::json!(structs_map);
+
+        // ログ出力
+        info!(
+            "Struct '{}' updated with new members: {:?}",
+            name, struct_var.value
+        );
+
+        Ok(struct_var.value.clone())
+    }
     fn eval_struct_statement(
         &mut self,
         name: &String,
         members: &Vec<Box<Node>>,
     ) -> Result<Value, String> {
-        /*
-            let mut structs: HashMap<String, serde_json::Value> = HashMap::new();
+        // 一時的にcontextの借用を解除
+        let context = //if *is_local {
+      //      &mut self.context.local_context
+       // } else {
+            &mut self.context.global_context;
+        // };
 
-            let member_map: serde_json::Value = members
-                .iter()
-                .map(|m| {
-                    let member_name = match m.value {
-                        NodeValue::Variable(_, ref v) => v.clone(),
-                        _ => String::new(),
-                    };
-                    let member_type = match m.value {
-                        NodeValue::Variable(ref v, _) => match v.value() {
-                            NodeValue::DataType(ref v) => match v.value() {
-                                NodeValue::Variable(_, ref v) => v.clone(),
-                                _ => String::new(),
-                            },
-                            _ => String::new(),
-                        },
-                        _ => String::new(),
-                    };
+        if context.contains_key(&name.clone()) {
+            return Err(compile_error!(
+                "error",
+                self.current_node.clone().unwrap().1.line(),
+                self.current_node.clone().unwrap().1.column(),
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Struct '{}' is already defined",
+                name
+            ));
+        }
 
-                    (member_name, serde_json::json!(member_type))
-                })
-                .collect();
+        let mut structs: HashMap<String, Value> = HashMap::new();
 
-            structs.insert(name.clone(), serde_json::json!(member_map));
+        // メンバーをイテレートしてマッピングを作成
+        let member_map: HashMap<String, Value> = members
+            .iter()
+            .filter_map(|m| {
+                // メンバーの名前を取得
+                let member_name = if let NodeValue::Variable(_, ref v) = m.value {
+                    v.clone()
+                } else {
+                    return None; // 変数以外のメンバーはスキップ
+                };
 
-            let value = serde_json::json!(structs);
-            let variables = Variable {
-                value: value.clone(),
-                data_type: Value::Null,
-                address: uuid::Uuid::nil(),
-                is_mutable: false,
-                size: value.size(),
-            };
-            self.context.global_context.insert(name.clone(), variables);
-            info!(
-                "StructDefined: name = {:?}, data_type = , value = {:?}, size = {:?}",
-                name,
-                value.clone(),
-                value.size()
-            );
+                // メンバーの型を取得
+                let member_type = if let NodeValue::Variable(ref v, _) = m.value {
+                    if let NodeValue::DataType(ref data_type) = v.value {
+                        match data_type {
+                            DataType::Int(_) => "int".to_string(),
+                            DataType::Float(_) => "float".to_string(),
+                            DataType::String(v) => v.clone(),
+                            DataType::Bool(_) => "bool".to_string(),
+                            DataType::Unit(_) => "unit".to_string(),
+                        }
+                    } else {
+                        "unknown".to_string()
+                    }
+                } else {
+                    "unknown".to_string()
+                };
 
-            Ok(value.clone())
-        */
-        Ok(Value::Null)
+                Some((member_name, serde_json::json!(member_type)))
+            })
+            .collect();
+
+        structs.insert(name.clone(), serde_json::json!(member_map));
+
+        // 構造体全体をJsonとして保存
+        let value = serde_json::json!(structs);
+
+        // グローバルコンテキストに変数として保存
+        let variables = Variable {
+            value: value.clone(),
+            data_type: Value::Null,
+            address: uuid::Uuid::nil(),
+            is_mutable: false,
+            size: value.to_string().len(),
+        };
+        self.context.global_context.insert(name.clone(), variables);
+
+        // ログ出力
+        info!(
+            "StructDefined: name = {:?}, value = {:?}, size = {:?}",
+            name,
+            value.clone(),
+            value.to_string().len()
+        );
+
+        Ok(value)
     }
 
     // ノードを評価
@@ -2180,6 +2340,9 @@ fn generate_html_from_comments(&mut self) -> String {
             }
             NodeValue::Block(block) => {
                 result = self.eval_block(&block)?;
+            }
+            NodeValue::Declaration(Declaration::Impl(name, members)) => {
+                result = self.eval_impl_statement(name, &members)?;
             }
 
             NodeValue::Declaration(Declaration::Struct(name, members)) => {
@@ -2239,11 +2402,11 @@ fn generate_html_from_comments(&mut self) -> String {
             }
             NodeValue::MultiComment(content, (line, column)) => {
                 self.eval_multi_comment(&content, &(*line, *column))?;
-                return Ok(result);
+                result = Value::Null;
             }
             NodeValue::SingleComment(content, (line, column)) => {
                 self.eval_single_comment(&content, &(*line, *column))?;
-                return Ok(result);
+                result = Value::Null;
             }
 
             NodeValue::Assign(var_name, value, index) => {

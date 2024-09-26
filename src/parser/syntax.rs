@@ -459,6 +459,10 @@ impl<'a> Parser<'a> {
                         self.current_token().unwrap().line(),
                         self.current_token().unwrap().column(),
                     );
+                } else if self.peek_next_token(1).unwrap().token_type()
+                    == TokenType::ScopeResolution
+                {
+                    node = *self.parse_scope_resolution()?;
                 } else {
                     self.next_token();
                     if self.current_token().unwrap().token_type() == TokenType::LeftParen {
@@ -528,7 +532,50 @@ impl<'a> Parser<'a> {
         }
         Ok(Box::new(node))
     }
+    fn parse_scope_resolution(&mut self) -> R<Box<Node>, String> {
+        let mut scope_resolution = vec![];
+        let ident = self.current_token().unwrap();
+        scope_resolution.push(Box::new(Node::new(
+            NodeValue::Variable(
+                Parser::<'a>::new_null(
+                    self.current_token().unwrap().line(),
+                    self.current_token().unwrap().column(),
+                ),
+                ident.token_value().clone(),
+            ),
+            None,
+            self.current_token().unwrap().line(),
+            self.current_token().unwrap().column(),
+        )));
+        self.next_token();
 
+        // panic!("{:?}",scope_resolution);
+        while self.current_token().unwrap().token_type() == TokenType::ScopeResolution {
+            self.next_token(); // ::
+            let scope = self.expr()?;
+            scope_resolution.push(scope.clone());
+            /*         if let NodeValue::Variable(data_type, name) = &scope.value() {
+            } else {
+                return Err(compile_error!(
+                    "error",
+                    self.current_token().unwrap().line(),
+                    self.current_token().unwrap().column(),
+                    &self.input_path(),
+                    &self.input_content(),
+                    "Expected Variable but found {:?} at line {}, column {}.",
+                    scope.clone().value(),
+                    scope.clone().line(),
+                    scope.clone().column()
+                ));
+            }*/
+        }
+        return Ok(Box::new(Node::new(
+            NodeValue::ScopeResolution(scope_resolution),
+            None,
+            self.current_token().unwrap().line(),
+            self.current_token().unwrap().column(),
+        )));
+    }
     fn parse_function_call(&mut self, token: Token, is_system: bool) -> R<Box<Node>, String> {
         self.next_token(); // '(' をスキップ
         let mut args = Vec::new();
@@ -1280,6 +1327,45 @@ impl<'a> Parser<'a> {
         self.next_token();
         Ok(Box::new(include_node))
     }
+    fn parse_impl_definition(&mut self) -> R<Box<Node>, String> {
+        self.next_token(); // impl
+        let var = self.current_token().unwrap().token_value().clone();
+        let mut member: Vec<Box<Node>> = Vec::new();
+
+        self.next_token(); // var
+        if self.current_token().unwrap().token_type() == TokenType::LeftCurlyBrace {
+            self.next_token(); // {
+            while self.current_token().unwrap().token_type() != TokenType::RightCurlyBrace {
+                let member_value = self.parse_single_statement().unwrap()?;
+                member.push(member_value);
+            }
+            self.next_token(); // }
+            Ok(Box::new(Node::new(
+                NodeValue::Declaration(Declaration::Impl(var.clone(), member.clone())),
+                None,
+                self.current_token().unwrap().line(),
+                self.current_token().unwrap().column(),
+            )))
+        } else {
+            Err(String::from(""))
+        } /* else {
+              if self.current_token().unwrap().token_type() == TokenType::Semi {
+                  self.is_statement = true;
+              }
+              Ok(Box::new(Node::new(
+                  NodeValue::Declaration(Declaration::Struct(
+                      var.clone(),
+                      vec![Parser::<'a>::new_null(
+                          self.current_token().unwrap().line(),
+                          self.current_token().unwrap().column(),
+                      )],
+                  )),
+                  None,
+                  self.current_token().unwrap().line(),
+                  self.current_token().unwrap().column(),
+              )))
+          }*/
+    }
 
     fn parse_struct_definition(&mut self) -> R<Box<Node>, String> {
         self.next_token(); // struct
@@ -1327,6 +1413,8 @@ impl<'a> Parser<'a> {
             self.parse_callback_function_definition()
         } else if self.current_token().unwrap().token_value() == "struct" {
             self.parse_struct_definition()
+        } else if self.current_token().unwrap().token_value() == "impl" {
+            self.parse_impl_definition()
         } else if self.current_token().unwrap().token_value() == "fn" {
             self.parse_function_definition()
         } else if self.current_token().unwrap().token_value() == "while" {

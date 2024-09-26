@@ -9,6 +9,16 @@ fn music_play_lists(paths,sleep_time){
         @sleep(sleep_time);
     }
 }
+struct TestClass{
+    member1:i32,
+    member2:string,
+}
+impl TestClass{
+    fn test(){
+        let a:i32 = 1000;
+        let b:i32 = a;
+    }
+}
 fn main(){
     let paths = [
                 "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",
@@ -34,6 +44,6 @@ fn main(){
 */
 
                 ];
-   
-                music_play_lists(paths,3);
+     
+//                music_play_lists(paths,3);
 }

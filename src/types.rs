@@ -148,6 +148,7 @@ pub enum NodeValue {
     Block(Vec<Box<Node>>),
     Variable(Box<Node>, String),
     Call(String, Vec<Node>, bool),
+    ScopeResolution(Vec<Box<Node>>),
     MultiComment(Vec<String>, (usize, usize)),
     SingleComment(String, (usize, usize)),
     Include(String),
