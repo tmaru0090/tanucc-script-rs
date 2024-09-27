@@ -212,7 +212,12 @@ impl<'a> Parser<'a> {
 
     pub fn new_variable(name: String, expr: Box<Node>, line: usize, column: usize) -> Box<Node> {
         let node = Node::new(
-            NodeValue::Variable(Parser::<'a>::new_null(line, column), name.clone(), false,false),
+            NodeValue::Variable(
+                Parser::<'a>::new_null(line, column),
+                name.clone(),
+                false,
+                false,
+            ),
             Some(expr),
             line,
             column,
@@ -386,7 +391,7 @@ impl<'a> Parser<'a> {
         let mut is_system = false;
         let mut node = Node::default();
         let mut is_reference = false;
-
+        let mut is_mutable = false;
         if token.token_type() == TokenType::AtSign {
             self.next_token();
             token = self.current_token().unwrap().clone();
@@ -396,7 +401,13 @@ impl<'a> Parser<'a> {
             self.next_token();
             token = self.current_token().unwrap().clone();
             is_reference = true;
+            if token.token_value() == "mut" {
+                self.next_token();
+                token = self.current_token().unwrap().clone();
+                is_mutable = true;
+            }
         }
+
         match self.current_token().unwrap().token_type() {
             TokenType::MultiComment(content, (line, column)) => {
                 self.next_token();
@@ -487,7 +498,7 @@ impl<'a> Parser<'a> {
                             NodeValue::Variable(
                                 data_type,
                                 token.token_value().clone(),
-                                false,
+                                is_mutable,
                                 is_reference,
                             ),
                             None,
@@ -648,7 +659,7 @@ impl<'a> Parser<'a> {
                     ));
                 }
                 let arg_name = match arg.value() {
-                    NodeValue::Variable(_, ref name, _,_) => name.clone(),
+                    NodeValue::Variable(_, ref name, _, _) => name.clone(),
                     _ => return Err("Invalid argument name".to_string()),
                 };
                 args.push((data_type, arg_name));
@@ -710,7 +721,7 @@ impl<'a> Parser<'a> {
                 ));
             }
             let arg_name = match arg.value() {
-                NodeValue::Variable(_, ref name, _,_) => name.clone(),
+                NodeValue::Variable(_, ref name, _, _) => name.clone(),
                 _ => return Err("Invalid argument name".to_string()),
             };
             args.push((data_type, arg_name));

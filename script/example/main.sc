@@ -14,15 +14,16 @@ struct TestClass{
     member2:string,
 }
 impl TestClass{
-    fn test(){
+    fn test(&self){
         let a:i32 = 1000;
         let b:i32 = a;
     }
 }
-fn test(&self){
+fn test(&mut self){
 }
 fn main(){
-    let paths = [
+  let b = 1000;
+  let paths = [
                 "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",
  /*               "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav",
@@ -46,5 +47,5 @@ fn main(){
 */
 
                 ];
-//                music_play_lists(paths,3);
+                music_play_lists(paths,3);
 }

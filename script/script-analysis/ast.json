@@ -1,4 +1,1211 @@
 {
+  "example/main.sc": {
+    "value": {
+      "MultiComment": [
+        [
+          "example/main.sc"
+        ],
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    "next": {
+      "value": {
+        "SingleComment": [
+          " テスト用",
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      "next": {
+        "value": {
+          "Include": "std.sc"
+        },
+        "next": {
+          "value": {
+            "Include": "example/test.sc"
+          },
+          "next": {
+            "value": {
+              "Declaration": {
+                "Function": [
+                  "music_play_lists",
+                  [
+                    [
+                      {
+                        "value": "Null",
+                        "next": null,
+                        "line": 6,
+                        "column": 26,
+                        "is_statement": false
+                      },
+                      "paths"
+                    ],
+                    [
+                      {
+                        "value": "Null",
+                        "next": null,
+                        "line": 6,
+                        "column": 37,
+                        "is_statement": false
+                      },
+                      "sleep_time"
+                    ]
+                  ],
+                  {
+                    "value": {
+                      "Block": [
+                        {
+                          "value": {
+                            "ControlFlow": {
+                              "For": [
+                                {
+                                  "value": {
+                                    "Variable": [
+                                      {
+                                        "value": "Null",
+                                        "next": null,
+                                        "line": 11,
+                                        "column": 1,
+                                        "is_statement": false
+                                      },
+                                      "path",
+                                      false,
+                                      false
+                                    ]
+                                  },
+                                  "next": null,
+                                  "line": 11,
+                                  "column": 1,
+                                  "is_statement": false
+                                },
+                                {
+                                  "value": {
+                                    "Variable": [
+                                      {
+                                        "value": "Null",
+                                        "next": null,
+                                        "line": 7,
+                                        "column": 17,
+                                        "is_statement": false
+                                      },
+                                      "paths",
+                                      false,
+                                      false
+                                    ]
+                                  },
+                                  "next": null,
+                                  "line": 7,
+                                  "column": 17,
+                                  "is_statement": false
+                                },
+                                {
+                                  "value": {
+                                    "Block": [
+                                      {
+                                        "value": {
+                                          "Call": [
+                                            "play_music",
+                                            [
+                                              {
+                                                "value": {
+                                                  "Variable": [
+                                                    {
+                                                      "value": "Null",
+                                                      "next": null,
+                                                      "line": 8,
+                                                      "column": 25,
+                                                      "is_statement": false
+                                                    },
+                                                    "path",
+                                                    false,
+                                                    false
+                                                  ]
+                                                },
+                                                "next": null,
+                                                "line": 8,
+                                                "column": 25,
+                                                "is_statement": false
+                                              }
+                                            ],
+                                            true
+                                          ]
+                                        },
+                                        "next": {
+                                          "value": "EndStatement",
+                                          "next": {
+                                            "value": {
+                                              "Call": [
+                                                "sleep",
+                                                [
+                                                  {
+                                                    "value": {
+                                                      "Variable": [
+                                                        {
+                                                          "value": "Null",
+                                                          "next": null,
+                                                          "line": 9,
+                                                          "column": 26,
+                                                          "is_statement": false
+                                                        },
+                                                        "sleep_time",
+                                                        false,
+                                                        false
+                                                      ]
+                                                    },
+                                                    "next": null,
+                                                    "line": 9,
+                                                    "column": 26,
+                                                    "is_statement": false
+                                                  }
+                                                ],
+                                                true
+                                              ]
+                                            },
+                                            "next": {
+                                              "value": "EndStatement",
+                                              "next": null,
+                                              "line": 10,
+                                              "column": 5,
+                                              "is_statement": false
+                                            },
+                                            "line": 9,
+                                            "column": 27,
+                                            "is_statement": true
+                                          },
+                                          "line": 9,
+                                          "column": 9,
+                                          "is_statement": false
+                                        },
+                                        "line": 8,
+                                        "column": 26,
+                                        "is_statement": true
+                                      }
+                                    ]
+                                  },
+                                  "next": null,
+                                  "line": 11,
+                                  "column": 1,
+                                  "is_statement": false
+                                }
+                              ]
+                            }
+                          },
+                          "next": null,
+                          "line": 11,
+                          "column": 1,
+                          "is_statement": false
+                        }
+                      ]
+                    },
+                    "next": null,
+                    "line": 12,
+                    "column": 1,
+                    "is_statement": false
+                  },
+                  {
+                    "value": "Null",
+                    "next": null,
+                    "line": 6,
+                    "column": 21,
+                    "is_statement": false
+                  },
+                  false
+                ]
+              }
+            },
+            "next": {
+              "value": {
+                "Declaration": {
+                  "Struct": [
+                    "TestClass",
+                    [
+                      {
+                        "value": {
+                          "Variable": [
+                            {
+                              "value": {
+                                "DataType": {
+                                  "String": "i32"
+                                }
+                              },
+                              "next": null,
+                              "line": 13,
+                              "column": 16,
+                              "is_statement": false
+                            },
+                            "member1",
+                            false,
+                            false
+                          ]
+                        },
+                        "next": null,
+                        "line": 13,
+                        "column": 16,
+                        "is_statement": false
+                      },
+                      {
+                        "value": {
+                          "Variable": [
+                            {
+                              "value": {
+                                "DataType": {
+                                  "String": "string"
+                                }
+                              },
+                              "next": null,
+                              "line": 14,
+                              "column": 19,
+                              "is_statement": false
+                            },
+                            "member2",
+                            false,
+                            false
+                          ]
+                        },
+                        "next": null,
+                        "line": 14,
+                        "column": 19,
+                        "is_statement": false
+                      }
+                    ]
+                  ]
+                }
+              },
+              "next": {
+                "value": {
+                  "Declaration": {
+                    "Impl": [
+                      "TestClass",
+                      [
+                        {
+                          "value": {
+                            "Declaration": {
+                              "Function": [
+                                "test",
+                                [
+                                  [
+                                    {
+                                      "value": "Null",
+                                      "next": null,
+                                      "line": 17,
+                                      "column": 18,
+                                      "is_statement": false
+                                    },
+                                    "self"
+                                  ]
+                                ],
+                                {
+                                  "value": {
+                                    "Block": [
+                                      {
+                                        "value": {
+                                          "Declaration": {
+                                            "Variable": [
+                                              {
+                                                "value": {
+                                                  "Variable": [
+                                                    {
+                                                      "value": "Null",
+                                                      "next": null,
+                                                      "line": 18,
+                                                      "column": 25,
+                                                      "is_statement": false
+                                                    },
+                                                    "a",
+                                                    false,
+                                                    false
+                                                  ]
+                                                },
+                                                "next": null,
+                                                "line": 18,
+                                                "column": 25,
+                                                "is_statement": false
+                                              },
+                                              {
+                                                "value": {
+                                                  "DataType": {
+                                                    "String": "i32"
+                                                  }
+                                                },
+                                                "next": null,
+                                                "line": 18,
+                                                "column": 19,
+                                                "is_statement": false
+                                              },
+                                              {
+                                                "value": {
+                                                  "DataType": {
+                                                    "Int": 1000
+                                                  }
+                                                },
+                                                "next": null,
+                                                "line": 18,
+                                                "column": 25,
+                                                "is_statement": false
+                                              },
+                                              true,
+                                              false
+                                            ]
+                                          }
+                                        },
+                                        "next": {
+                                          "value": "EndStatement",
+                                          "next": {
+                                            "value": {
+                                              "Declaration": {
+                                                "Variable": [
+                                                  {
+                                                    "value": {
+                                                      "Variable": [
+                                                        {
+                                                          "value": "Null",
+                                                          "next": null,
+                                                          "line": 19,
+                                                          "column": 22,
+                                                          "is_statement": false
+                                                        },
+                                                        "b",
+                                                        false,
+                                                        false
+                                                      ]
+                                                    },
+                                                    "next": null,
+                                                    "line": 19,
+                                                    "column": 22,
+                                                    "is_statement": false
+                                                  },
+                                                  {
+                                                    "value": {
+                                                      "DataType": {
+                                                        "String": "i32"
+                                                      }
+                                                    },
+                                                    "next": null,
+                                                    "line": 19,
+                                                    "column": 19,
+                                                    "is_statement": false
+                                                  },
+                                                  {
+                                                    "value": {
+                                                      "Variable": [
+                                                        {
+                                                          "value": "Null",
+                                                          "next": null,
+                                                          "line": 19,
+                                                          "column": 22,
+                                                          "is_statement": false
+                                                        },
+                                                        "a",
+                                                        false,
+                                                        false
+                                                      ]
+                                                    },
+                                                    "next": null,
+                                                    "line": 19,
+                                                    "column": 22,
+                                                    "is_statement": false
+                                                  },
+                                                  true,
+                                                  false
+                                                ]
+                                              }
+                                            },
+                                            "next": {
+                                              "value": "EndStatement",
+                                              "next": null,
+                                              "line": 20,
+                                              "column": 5,
+                                              "is_statement": false
+                                            },
+                                            "line": 19,
+                                            "column": 22,
+                                            "is_statement": true
+                                          },
+                                          "line": 19,
+                                          "column": 9,
+                                          "is_statement": false
+                                        },
+                                        "line": 18,
+                                        "column": 25,
+                                        "is_statement": true
+                                      }
+                                    ]
+                                  },
+                                  "next": null,
+                                  "line": 21,
+                                  "column": 1,
+                                  "is_statement": false
+                                },
+                                {
+                                  "value": "Null",
+                                  "next": null,
+                                  "line": 17,
+                                  "column": 13,
+                                  "is_statement": false
+                                },
+                                false
+                              ]
+                            }
+                          },
+                          "next": null,
+                          "line": 21,
+                          "column": 1,
+                          "is_statement": false
+                        }
+                      ]
+                    ]
+                  }
+                },
+                "next": {
+                  "value": {
+                    "Declaration": {
+                      "Function": [
+                        "test",
+                        [
+                          [
+                            {
+                              "value": "Null",
+                              "next": null,
+                              "line": 22,
+                              "column": 18,
+                              "is_statement": false
+                            },
+                            "self"
+                          ]
+                        ],
+                        {
+                          "value": {
+                            "Block": []
+                          },
+                          "next": null,
+                          "line": 24,
+                          "column": 1,
+                          "is_statement": false
+                        },
+                        {
+                          "value": "Null",
+                          "next": null,
+                          "line": 22,
+                          "column": 9,
+                          "is_statement": false
+                        },
+                        false
+                      ]
+                    }
+                  },
+                  "next": {
+                    "value": {
+                      "Declaration": {
+                        "Function": [
+                          "main",
+                          [],
+                          {
+                            "value": {
+                              "Block": [
+                                {
+                                  "value": {
+                                    "Declaration": {
+                                      "Variable": [
+                                        {
+                                          "value": {
+                                            "Variable": [
+                                              {
+                                                "value": "Null",
+                                                "next": null,
+                                                "line": 25,
+                                                "column": 15,
+                                                "is_statement": false
+                                              },
+                                              "b",
+                                              false,
+                                              false
+                                            ]
+                                          },
+                                          "next": null,
+                                          "line": 25,
+                                          "column": 15,
+                                          "is_statement": false
+                                        },
+                                        {
+                                          "value": {
+                                            "DataType": {
+                                              "Unit": null
+                                            }
+                                          },
+                                          "next": null,
+                                          "line": 25,
+                                          "column": 7,
+                                          "is_statement": false
+                                        },
+                                        {
+                                          "value": {
+                                            "DataType": {
+                                              "Int": 1000
+                                            }
+                                          },
+                                          "next": null,
+                                          "line": 25,
+                                          "column": 15,
+                                          "is_statement": false
+                                        },
+                                        true,
+                                        false
+                                      ]
+                                    }
+                                  },
+                                  "next": {
+                                    "value": "EndStatement",
+                                    "next": {
+                                      "value": {
+                                        "Declaration": {
+                                          "Variable": [
+                                            {
+                                              "value": {
+                                                "Variable": [
+                                                  {
+                                                    "value": "Null",
+                                                    "next": null,
+                                                    "line": 26,
+                                                    "column": 19,
+                                                    "is_statement": false
+                                                  },
+                                                  "a",
+                                                  false,
+                                                  false
+                                                ]
+                                              },
+                                              "next": null,
+                                              "line": 26,
+                                              "column": 19,
+                                              "is_statement": false
+                                            },
+                                            {
+                                              "value": {
+                                                "DataType": {
+                                                  "String": "usize"
+                                                }
+                                              },
+                                              "next": null,
+                                              "line": 26,
+                                              "column": 15,
+                                              "is_statement": false
+                                            },
+                                            {
+                                              "value": {
+                                                "Variable": [
+                                                  {
+                                                    "value": "Null",
+                                                    "next": null,
+                                                    "line": 26,
+                                                    "column": 19,
+                                                    "is_statement": false
+                                                  },
+                                                  "b",
+                                                  false,
+                                                  true
+                                                ]
+                                              },
+                                              "next": null,
+                                              "line": 26,
+                                              "column": 19,
+                                              "is_statement": false
+                                            },
+                                            true,
+                                            false
+                                          ]
+                                        }
+                                      },
+                                      "next": {
+                                        "value": "EndStatement",
+                                        "next": {
+                                          "value": {
+                                            "Declaration": {
+                                              "Variable": [
+                                                {
+                                                  "value": {
+                                                    "Variable": [
+                                                      {
+                                                        "value": "Null",
+                                                        "next": null,
+                                                        "line": 50,
+                                                        "column": 18,
+                                                        "is_statement": false
+                                                      },
+                                                      "paths",
+                                                      false,
+                                                      false
+                                                    ]
+                                                  },
+                                                  "next": null,
+                                                  "line": 50,
+                                                  "column": 18,
+                                                  "is_statement": false
+                                                },
+                                                {
+                                                  "value": {
+                                                    "DataType": {
+                                                      "Unit": null
+                                                    }
+                                                  },
+                                                  "next": null,
+                                                  "line": 27,
+                                                  "column": 7,
+                                                  "is_statement": false
+                                                },
+                                                {
+                                                  "value": {
+                                                    "Declaration": {
+                                                      "Array": [
+                                                        {
+                                                          "value": "Null",
+                                                          "next": null,
+                                                          "line": 27,
+                                                          "column": 15,
+                                                          "is_statement": false
+                                                        },
+                                                        [
+                                                          {
+                                                            "value": {
+                                                              "DataType": {
+                                                                "String": "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav"
+                                                              }
+                                                            },
+                                                            "next": null,
+                                                            "line": 28,
+                                                            "column": 75,
+                                                            "is_statement": false
+                                                          },
+                                                          {
+                                                            "value": {
+                                                              "MultiComment": [
+                                                                [
+                                                                  "               \"C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-densetu.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-end.mp3\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-end.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-sentou-zimu.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-syouri-mokuzen.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-t-sentou.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-title.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-y-sentou.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw2-op.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw2-title.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/ryokugan.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/th3_05.mp3\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/write-san-end (1).wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/write-san-end (2).wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/write-san-end.wav\",",
+                                                                  "                \"C:/Users/tanukimaru/Downloads/sounds/繧ｫ繝ｼ繧ｽ繝ｫ遘ｻ蜍・.mp3\""
+                                                                ],
+                                                                [
+                                                                  29,
+                                                                  2
+                                                                ]
+                                                              ]
+                                                            },
+                                                            "next": null,
+                                                            "line": 50,
+                                                            "column": 17,
+                                                            "is_statement": false
+                                                          }
+                                                        ]
+                                                      ]
+                                                    }
+                                                  },
+                                                  "next": null,
+                                                  "line": 50,
+                                                  "column": 18,
+                                                  "is_statement": false
+                                                },
+                                                true,
+                                                false
+                                              ]
+                                            }
+                                          },
+                                          "next": {
+                                            "value": "EndStatement",
+                                            "next": {
+                                              "value": {
+                                                "SingleComment": [
+                                                  "                music_play_lists(paths,3);",
+                                                  [
+                                                    51,
+                                                    1
+                                                  ]
+                                                ]
+                                              },
+                                              "next": null,
+                                              "line": 52,
+                                              "column": 1,
+                                              "is_statement": false
+                                            },
+                                            "line": 51,
+                                            "column": 1,
+                                            "is_statement": false
+                                          },
+                                          "line": 50,
+                                          "column": 18,
+                                          "is_statement": true
+                                        },
+                                        "line": 27,
+                                        "column": 3,
+                                        "is_statement": false
+                                      },
+                                      "line": 26,
+                                      "column": 19,
+                                      "is_statement": true
+                                    },
+                                    "line": 26,
+                                    "column": 3,
+                                    "is_statement": false
+                                  },
+                                  "line": 25,
+                                  "column": 15,
+                                  "is_statement": true
+                                }
+                              ]
+                            },
+                            "next": null,
+                            "line": 52,
+                            "column": 1,
+                            "is_statement": false
+                          },
+                          {
+                            "value": "Null",
+                            "next": null,
+                            "line": 24,
+                            "column": 9,
+                            "is_statement": false
+                          },
+                          false
+                        ]
+                      }
+                    },
+                    "next": null,
+                    "line": 52,
+                    "column": 1,
+                    "is_statement": false
+                  },
+                  "line": 24,
+                  "column": 1,
+                  "is_statement": false
+                },
+                "line": 22,
+                "column": 1,
+                "is_statement": false
+              },
+              "line": 16,
+              "column": 1,
+              "is_statement": false
+            },
+            "line": 12,
+            "column": 1,
+            "is_statement": false
+          },
+          "line": 4,
+          "column": 10,
+          "is_statement": false
+        },
+        "line": 3,
+        "column": 10,
+        "is_statement": false
+      },
+      "line": 3,
+      "column": 1,
+      "is_statement": false
+    },
+    "line": 2,
+    "column": 1,
+    "is_statement": false
+  },
+  "example/test.sc": {
+    "value": {
+      "SingleComment": [
+        " フィボナッチ",
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    "next": {
+      "value": {
+        "Declaration": {
+          "Function": [
+            "f",
+            [
+              [
+                {
+                  "value": "Null",
+                  "next": null,
+                  "line": 2,
+                  "column": 7,
+                  "is_statement": false
+                },
+                "n"
+              ]
+            ],
+            {
+              "value": {
+                "Block": [
+                  {
+                    "value": {
+                      "ControlFlow": {
+                        "If": [
+                          {
+                            "value": {
+                              "Operator": {
+                                "Eq": [
+                                  {
+                                    "value": {
+                                      "Variable": [
+                                        {
+                                          "value": "Null",
+                                          "next": null,
+                                          "line": 3,
+                                          "column": 10,
+                                          "is_statement": false
+                                        },
+                                        "n",
+                                        false,
+                                        false
+                                      ]
+                                    },
+                                    "next": null,
+                                    "line": 3,
+                                    "column": 10,
+                                    "is_statement": false
+                                  },
+                                  {
+                                    "value": {
+                                      "DataType": {
+                                        "Int": 0
+                                      }
+                                    },
+                                    "next": null,
+                                    "line": 3,
+                                    "column": 14,
+                                    "is_statement": false
+                                  }
+                                ]
+                              }
+                            },
+                            "next": null,
+                            "line": 3,
+                            "column": 14,
+                            "is_statement": false
+                          },
+                          {
+                            "value": {
+                              "Block": [
+                                {
+                                  "value": {
+                                    "ControlFlow": {
+                                      "Return": {
+                                        "value": {
+                                          "DataType": {
+                                            "Int": 0
+                                          }
+                                        },
+                                        "next": null,
+                                        "line": 4,
+                                        "column": 17,
+                                        "is_statement": false
+                                      }
+                                    }
+                                  },
+                                  "next": {
+                                    "value": "EndStatement",
+                                    "next": null,
+                                    "line": 5,
+                                    "column": 5,
+                                    "is_statement": false
+                                  },
+                                  "line": 4,
+                                  "column": 17,
+                                  "is_statement": false
+                                }
+                              ]
+                            },
+                            "next": null,
+                            "line": 6,
+                            "column": 5,
+                            "is_statement": false
+                          }
+                        ]
+                      }
+                    },
+                    "next": {
+                      "value": {
+                        "ControlFlow": {
+                          "If": [
+                            {
+                              "value": {
+                                "Operator": {
+                                  "Eq": [
+                                    {
+                                      "value": {
+                                        "Variable": [
+                                          {
+                                            "value": "Null",
+                                            "next": null,
+                                            "line": 6,
+                                            "column": 10,
+                                            "is_statement": false
+                                          },
+                                          "n",
+                                          false,
+                                          false
+                                        ]
+                                      },
+                                      "next": null,
+                                      "line": 6,
+                                      "column": 10,
+                                      "is_statement": false
+                                    },
+                                    {
+                                      "value": {
+                                        "DataType": {
+                                          "Int": 1
+                                        }
+                                      },
+                                      "next": null,
+                                      "line": 6,
+                                      "column": 14,
+                                      "is_statement": false
+                                    }
+                                  ]
+                                }
+                              },
+                              "next": null,
+                              "line": 6,
+                              "column": 14,
+                              "is_statement": false
+                            },
+                            {
+                              "value": {
+                                "Block": [
+                                  {
+                                    "value": {
+                                      "ControlFlow": {
+                                        "Return": {
+                                          "value": {
+                                            "DataType": {
+                                              "Int": 1
+                                            }
+                                          },
+                                          "next": null,
+                                          "line": 7,
+                                          "column": 17,
+                                          "is_statement": false
+                                        }
+                                      }
+                                    },
+                                    "next": {
+                                      "value": "EndStatement",
+                                      "next": null,
+                                      "line": 8,
+                                      "column": 5,
+                                      "is_statement": false
+                                    },
+                                    "line": 7,
+                                    "column": 17,
+                                    "is_statement": true
+                                  }
+                                ]
+                              },
+                              "next": null,
+                              "line": 10,
+                              "column": 5,
+                              "is_statement": false
+                            }
+                          ]
+                        }
+                      },
+                      "next": {
+                        "value": {
+                          "ControlFlow": {
+                            "Return": {
+                              "value": {
+                                "Operator": {
+                                  "Add": [
+                                    {
+                                      "value": {
+                                        "Call": [
+                                          "f",
+                                          [
+                                            {
+                                              "value": {
+                                                "Operator": {
+                                                  "Sub": [
+                                                    {
+                                                      "value": {
+                                                        "Variable": [
+                                                          {
+                                                            "value": "Null",
+                                                            "next": null,
+                                                            "line": 10,
+                                                            "column": 16,
+                                                            "is_statement": false
+                                                          },
+                                                          "n",
+                                                          false,
+                                                          false
+                                                        ]
+                                                      },
+                                                      "next": null,
+                                                      "line": 10,
+                                                      "column": 16,
+                                                      "is_statement": false
+                                                    },
+                                                    {
+                                                      "value": {
+                                                        "DataType": {
+                                                          "Int": 1
+                                                        }
+                                                      },
+                                                      "next": null,
+                                                      "line": 10,
+                                                      "column": 19,
+                                                      "is_statement": false
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              "next": null,
+                                              "line": 10,
+                                              "column": 19,
+                                              "is_statement": false
+                                            }
+                                          ],
+                                          false
+                                        ]
+                                      },
+                                      "next": null,
+                                      "line": 10,
+                                      "column": 21,
+                                      "is_statement": true
+                                    },
+                                    {
+                                      "value": {
+                                        "Call": [
+                                          "f",
+                                          [
+                                            {
+                                              "value": {
+                                                "Operator": {
+                                                  "Sub": [
+                                                    {
+                                                      "value": {
+                                                        "Variable": [
+                                                          {
+                                                            "value": "Null",
+                                                            "next": null,
+                                                            "line": 10,
+                                                            "column": 27,
+                                                            "is_statement": false
+                                                          },
+                                                          "n",
+                                                          false,
+                                                          false
+                                                        ]
+                                                      },
+                                                      "next": null,
+                                                      "line": 10,
+                                                      "column": 27,
+                                                      "is_statement": false
+                                                    },
+                                                    {
+                                                      "value": {
+                                                        "DataType": {
+                                                          "Int": 2
+                                                        }
+                                                      },
+                                                      "next": null,
+                                                      "line": 10,
+                                                      "column": 30,
+                                                      "is_statement": false
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              "next": null,
+                                              "line": 10,
+                                              "column": 30,
+                                              "is_statement": false
+                                            }
+                                          ],
+                                          false
+                                        ]
+                                      },
+                                      "next": null,
+                                      "line": 10,
+                                      "column": 31,
+                                      "is_statement": true
+                                    }
+                                  ]
+                                }
+                              },
+                              "next": null,
+                              "line": 10,
+                              "column": 31,
+                              "is_statement": false
+                            }
+                          }
+                        },
+                        "next": {
+                          "value": "EndStatement",
+                          "next": null,
+                          "line": 11,
+                          "column": 1,
+                          "is_statement": false
+                        },
+                        "line": 10,
+                        "column": 31,
+                        "is_statement": true
+                      },
+                      "line": 10,
+                      "column": 5,
+                      "is_statement": true
+                    },
+                    "line": 6,
+                    "column": 5,
+                    "is_statement": true
+                  }
+                ]
+              },
+              "next": null,
+              "line": 11,
+              "column": 1,
+              "is_statement": false
+            },
+            {
+              "value": "Null",
+              "next": null,
+              "line": 2,
+              "column": 6,
+              "is_statement": false
+            },
+            false
+          ]
+        }
+      },
+      "next": null,
+      "line": 11,
+      "column": 1,
+      "is_statement": false
+    },
+    "line": 2,
+    "column": 1,
+    "is_statement": false
+  },
   "std.sc": {
     "value": {
       "SingleComment": [
@@ -575,690 +1782,6 @@
     "column": 1,
     "is_statement": false
   },
-  "example/main.sc": {
-    "value": {
-      "MultiComment": [
-        [
-          "example/main.sc"
-        ],
-        [
-          1,
-          1
-        ]
-      ]
-    },
-    "next": {
-      "value": {
-        "SingleComment": [
-          " テスト用",
-          [
-            2,
-            1
-          ]
-        ]
-      },
-      "next": {
-        "value": {
-          "Include": "std.sc"
-        },
-        "next": {
-          "value": {
-            "Include": "example/test.sc"
-          },
-          "next": {
-            "value": {
-              "Declaration": {
-                "Function": [
-                  "music_play_lists",
-                  [
-                    [
-                      {
-                        "value": "Null",
-                        "next": null,
-                        "line": 6,
-                        "column": 26,
-                        "is_statement": false
-                      },
-                      "paths"
-                    ],
-                    [
-                      {
-                        "value": "Null",
-                        "next": null,
-                        "line": 6,
-                        "column": 37,
-                        "is_statement": false
-                      },
-                      "sleep_time"
-                    ]
-                  ],
-                  {
-                    "value": {
-                      "Block": [
-                        {
-                          "value": {
-                            "ControlFlow": {
-                              "For": [
-                                {
-                                  "value": {
-                                    "Variable": [
-                                      {
-                                        "value": "Null",
-                                        "next": null,
-                                        "line": 11,
-                                        "column": 1,
-                                        "is_statement": false
-                                      },
-                                      "path",
-                                      false,
-                                      false
-                                    ]
-                                  },
-                                  "next": null,
-                                  "line": 11,
-                                  "column": 1,
-                                  "is_statement": false
-                                },
-                                {
-                                  "value": {
-                                    "Variable": [
-                                      {
-                                        "value": "Null",
-                                        "next": null,
-                                        "line": 7,
-                                        "column": 17,
-                                        "is_statement": false
-                                      },
-                                      "paths",
-                                      false,
-                                      false
-                                    ]
-                                  },
-                                  "next": null,
-                                  "line": 7,
-                                  "column": 17,
-                                  "is_statement": false
-                                },
-                                {
-                                  "value": {
-                                    "Block": [
-                                      {
-                                        "value": {
-                                          "Call": [
-                                            "play_music",
-                                            [
-                                              {
-                                                "value": {
-                                                  "Variable": [
-                                                    {
-                                                      "value": "Null",
-                                                      "next": null,
-                                                      "line": 8,
-                                                      "column": 25,
-                                                      "is_statement": false
-                                                    },
-                                                    "path",
-                                                    false,
-                                                    false
-                                                  ]
-                                                },
-                                                "next": null,
-                                                "line": 8,
-                                                "column": 25,
-                                                "is_statement": false
-                                              }
-                                            ],
-                                            true
-                                          ]
-                                        },
-                                        "next": {
-                                          "value": "EndStatement",
-                                          "next": {
-                                            "value": {
-                                              "Call": [
-                                                "sleep",
-                                                [
-                                                  {
-                                                    "value": {
-                                                      "Variable": [
-                                                        {
-                                                          "value": "Null",
-                                                          "next": null,
-                                                          "line": 9,
-                                                          "column": 26,
-                                                          "is_statement": false
-                                                        },
-                                                        "sleep_time",
-                                                        false,
-                                                        false
-                                                      ]
-                                                    },
-                                                    "next": null,
-                                                    "line": 9,
-                                                    "column": 26,
-                                                    "is_statement": false
-                                                  }
-                                                ],
-                                                true
-                                              ]
-                                            },
-                                            "next": {
-                                              "value": "EndStatement",
-                                              "next": null,
-                                              "line": 10,
-                                              "column": 5,
-                                              "is_statement": false
-                                            },
-                                            "line": 9,
-                                            "column": 27,
-                                            "is_statement": true
-                                          },
-                                          "line": 9,
-                                          "column": 9,
-                                          "is_statement": false
-                                        },
-                                        "line": 8,
-                                        "column": 26,
-                                        "is_statement": true
-                                      }
-                                    ]
-                                  },
-                                  "next": null,
-                                  "line": 11,
-                                  "column": 1,
-                                  "is_statement": false
-                                }
-                              ]
-                            }
-                          },
-                          "next": null,
-                          "line": 11,
-                          "column": 1,
-                          "is_statement": false
-                        }
-                      ]
-                    },
-                    "next": null,
-                    "line": 12,
-                    "column": 1,
-                    "is_statement": false
-                  },
-                  {
-                    "value": "Null",
-                    "next": null,
-                    "line": 6,
-                    "column": 21,
-                    "is_statement": false
-                  },
-                  false
-                ]
-              }
-            },
-            "next": {
-              "value": {
-                "Declaration": {
-                  "Struct": [
-                    "TestClass",
-                    [
-                      {
-                        "value": {
-                          "Variable": [
-                            {
-                              "value": {
-                                "DataType": {
-                                  "String": "i32"
-                                }
-                              },
-                              "next": null,
-                              "line": 13,
-                              "column": 16,
-                              "is_statement": false
-                            },
-                            "member1",
-                            false,
-                            false
-                          ]
-                        },
-                        "next": null,
-                        "line": 13,
-                        "column": 16,
-                        "is_statement": false
-                      },
-                      {
-                        "value": {
-                          "Variable": [
-                            {
-                              "value": {
-                                "DataType": {
-                                  "String": "string"
-                                }
-                              },
-                              "next": null,
-                              "line": 14,
-                              "column": 19,
-                              "is_statement": false
-                            },
-                            "member2",
-                            false,
-                            false
-                          ]
-                        },
-                        "next": null,
-                        "line": 14,
-                        "column": 19,
-                        "is_statement": false
-                      }
-                    ]
-                  ]
-                }
-              },
-              "next": {
-                "value": {
-                  "Declaration": {
-                    "Impl": [
-                      "TestClass",
-                      [
-                        {
-                          "value": {
-                            "Declaration": {
-                              "Function": [
-                                "test",
-                                [],
-                                {
-                                  "value": {
-                                    "Block": [
-                                      {
-                                        "value": {
-                                          "Declaration": {
-                                            "Variable": [
-                                              {
-                                                "value": {
-                                                  "Variable": [
-                                                    {
-                                                      "value": "Null",
-                                                      "next": null,
-                                                      "line": 18,
-                                                      "column": 25,
-                                                      "is_statement": false
-                                                    },
-                                                    "a",
-                                                    false,
-                                                    false
-                                                  ]
-                                                },
-                                                "next": null,
-                                                "line": 18,
-                                                "column": 25,
-                                                "is_statement": false
-                                              },
-                                              {
-                                                "value": {
-                                                  "DataType": {
-                                                    "String": "i32"
-                                                  }
-                                                },
-                                                "next": null,
-                                                "line": 18,
-                                                "column": 19,
-                                                "is_statement": false
-                                              },
-                                              {
-                                                "value": {
-                                                  "DataType": {
-                                                    "Int": 1000
-                                                  }
-                                                },
-                                                "next": null,
-                                                "line": 18,
-                                                "column": 25,
-                                                "is_statement": false
-                                              },
-                                              true,
-                                              false
-                                            ]
-                                          }
-                                        },
-                                        "next": {
-                                          "value": "EndStatement",
-                                          "next": {
-                                            "value": {
-                                              "Declaration": {
-                                                "Variable": [
-                                                  {
-                                                    "value": {
-                                                      "Variable": [
-                                                        {
-                                                          "value": "Null",
-                                                          "next": null,
-                                                          "line": 19,
-                                                          "column": 22,
-                                                          "is_statement": false
-                                                        },
-                                                        "b",
-                                                        false,
-                                                        false
-                                                      ]
-                                                    },
-                                                    "next": null,
-                                                    "line": 19,
-                                                    "column": 22,
-                                                    "is_statement": false
-                                                  },
-                                                  {
-                                                    "value": {
-                                                      "DataType": {
-                                                        "String": "i32"
-                                                      }
-                                                    },
-                                                    "next": null,
-                                                    "line": 19,
-                                                    "column": 19,
-                                                    "is_statement": false
-                                                  },
-                                                  {
-                                                    "value": {
-                                                      "Variable": [
-                                                        {
-                                                          "value": "Null",
-                                                          "next": null,
-                                                          "line": 19,
-                                                          "column": 22,
-                                                          "is_statement": false
-                                                        },
-                                                        "a",
-                                                        false,
-                                                        false
-                                                      ]
-                                                    },
-                                                    "next": null,
-                                                    "line": 19,
-                                                    "column": 22,
-                                                    "is_statement": false
-                                                  },
-                                                  true,
-                                                  false
-                                                ]
-                                              }
-                                            },
-                                            "next": {
-                                              "value": "EndStatement",
-                                              "next": null,
-                                              "line": 20,
-                                              "column": 5,
-                                              "is_statement": false
-                                            },
-                                            "line": 19,
-                                            "column": 22,
-                                            "is_statement": true
-                                          },
-                                          "line": 19,
-                                          "column": 9,
-                                          "is_statement": false
-                                        },
-                                        "line": 18,
-                                        "column": 25,
-                                        "is_statement": true
-                                      }
-                                    ]
-                                  },
-                                  "next": null,
-                                  "line": 21,
-                                  "column": 1,
-                                  "is_statement": false
-                                },
-                                {
-                                  "value": "Null",
-                                  "next": null,
-                                  "line": 17,
-                                  "column": 13,
-                                  "is_statement": false
-                                },
-                                false
-                              ]
-                            }
-                          },
-                          "next": null,
-                          "line": 21,
-                          "column": 1,
-                          "is_statement": false
-                        }
-                      ]
-                    ]
-                  }
-                },
-                "next": {
-                  "value": {
-                    "Declaration": {
-                      "Function": [
-                        "test",
-                        [
-                          [
-                            {
-                              "value": "Null",
-                              "next": null,
-                              "line": 22,
-                              "column": 14,
-                              "is_statement": false
-                            },
-                            "self"
-                          ]
-                        ],
-                        {
-                          "value": {
-                            "Block": []
-                          },
-                          "next": null,
-                          "line": 24,
-                          "column": 1,
-                          "is_statement": false
-                        },
-                        {
-                          "value": "Null",
-                          "next": null,
-                          "line": 22,
-                          "column": 9,
-                          "is_statement": false
-                        },
-                        false
-                      ]
-                    }
-                  },
-                  "next": {
-                    "value": {
-                      "Declaration": {
-                        "Function": [
-                          "main",
-                          [],
-                          {
-                            "value": {
-                              "Block": [
-                                {
-                                  "value": {
-                                    "Declaration": {
-                                      "Variable": [
-                                        {
-                                          "value": {
-                                            "Variable": [
-                                              {
-                                                "value": "Null",
-                                                "next": null,
-                                                "line": 48,
-                                                "column": 18,
-                                                "is_statement": false
-                                              },
-                                              "paths",
-                                              false,
-                                              false
-                                            ]
-                                          },
-                                          "next": null,
-                                          "line": 48,
-                                          "column": 18,
-                                          "is_statement": false
-                                        },
-                                        {
-                                          "value": {
-                                            "DataType": {
-                                              "Unit": null
-                                            }
-                                          },
-                                          "next": null,
-                                          "line": 25,
-                                          "column": 9,
-                                          "is_statement": false
-                                        },
-                                        {
-                                          "value": {
-                                            "Declaration": {
-                                              "Array": [
-                                                {
-                                                  "value": "Null",
-                                                  "next": null,
-                                                  "line": 25,
-                                                  "column": 17,
-                                                  "is_statement": false
-                                                },
-                                                [
-                                                  {
-                                                    "value": {
-                                                      "DataType": {
-                                                        "String": "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav"
-                                                      }
-                                                    },
-                                                    "next": null,
-                                                    "line": 26,
-                                                    "column": 75,
-                                                    "is_statement": false
-                                                  },
-                                                  {
-                                                    "value": {
-                                                      "MultiComment": [
-                                                        [
-                                                          "               \"C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-densetu.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-end.mp3\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-end.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-sentou-zimu.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-syouri-mokuzen.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-t-sentou.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-title.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-y-sentou.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw2-op.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/pokemon-bw2-title.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/ryokugan.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/th3_05.mp3\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/write-san-end (1).wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/write-san-end (2).wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/write-san-end.wav\",",
-                                                          "                \"C:/Users/tanukimaru/Downloads/sounds/繧ｫ繝ｼ繧ｽ繝ｫ遘ｻ蜍・.mp3\""
-                                                        ],
-                                                        [
-                                                          27,
-                                                          2
-                                                        ]
-                                                      ]
-                                                    },
-                                                    "next": null,
-                                                    "line": 48,
-                                                    "column": 17,
-                                                    "is_statement": false
-                                                  }
-                                                ]
-                                              ]
-                                            }
-                                          },
-                                          "next": null,
-                                          "line": 48,
-                                          "column": 18,
-                                          "is_statement": false
-                                        },
-                                        true,
-                                        false
-                                      ]
-                                    }
-                                  },
-                                  "next": {
-                                    "value": "EndStatement",
-                                    "next": {
-                                      "value": {
-                                        "SingleComment": [
-                                          "                music_play_lists(paths,3);",
-                                          [
-                                            49,
-                                            1
-                                          ]
-                                        ]
-                                      },
-                                      "next": null,
-                                      "line": 50,
-                                      "column": 1,
-                                      "is_statement": false
-                                    },
-                                    "line": 49,
-                                    "column": 1,
-                                    "is_statement": false
-                                  },
-                                  "line": 48,
-                                  "column": 18,
-                                  "is_statement": true
-                                }
-                              ]
-                            },
-                            "next": null,
-                            "line": 50,
-                            "column": 1,
-                            "is_statement": false
-                          },
-                          {
-                            "value": "Null",
-                            "next": null,
-                            "line": 24,
-                            "column": 9,
-                            "is_statement": false
-                          },
-                          false
-                        ]
-                      }
-                    },
-                    "next": null,
-                    "line": 50,
-                    "column": 1,
-                    "is_statement": false
-                  },
-                  "line": 24,
-                  "column": 1,
-                  "is_statement": false
-                },
-                "line": 22,
-                "column": 1,
-                "is_statement": false
-              },
-              "line": 16,
-              "column": 1,
-              "is_statement": false
-            },
-            "line": 12,
-            "column": 1,
-            "is_statement": false
-          },
-          "line": 4,
-          "column": 10,
-          "is_statement": false
-        },
-        "line": 3,
-        "column": 10,
-        "is_statement": false
-      },
-      "line": 3,
-      "column": 1,
-      "is_statement": false
-    },
-    "line": 2,
-    "column": 1,
-    "is_statement": false
-  },
   "main-entry": {
     "value": {
       "Call": [
@@ -1277,386 +1800,5 @@
     "line": 1,
     "column": 7,
     "is_statement": true
-  },
-  "example/test.sc": {
-    "value": {
-      "SingleComment": [
-        " フィボナッチ",
-        [
-          1,
-          1
-        ]
-      ]
-    },
-    "next": {
-      "value": {
-        "Declaration": {
-          "Function": [
-            "f",
-            [
-              [
-                {
-                  "value": "Null",
-                  "next": null,
-                  "line": 2,
-                  "column": 7,
-                  "is_statement": false
-                },
-                "n"
-              ]
-            ],
-            {
-              "value": {
-                "Block": [
-                  {
-                    "value": {
-                      "ControlFlow": {
-                        "If": [
-                          {
-                            "value": {
-                              "Operator": {
-                                "Eq": [
-                                  {
-                                    "value": {
-                                      "Variable": [
-                                        {
-                                          "value": "Null",
-                                          "next": null,
-                                          "line": 3,
-                                          "column": 10,
-                                          "is_statement": false
-                                        },
-                                        "n",
-                                        false,
-                                        false
-                                      ]
-                                    },
-                                    "next": null,
-                                    "line": 3,
-                                    "column": 10,
-                                    "is_statement": false
-                                  },
-                                  {
-                                    "value": {
-                                      "DataType": {
-                                        "Int": 0
-                                      }
-                                    },
-                                    "next": null,
-                                    "line": 3,
-                                    "column": 14,
-                                    "is_statement": false
-                                  }
-                                ]
-                              }
-                            },
-                            "next": null,
-                            "line": 3,
-                            "column": 14,
-                            "is_statement": false
-                          },
-                          {
-                            "value": {
-                              "Block": [
-                                {
-                                  "value": {
-                                    "ControlFlow": {
-                                      "Return": {
-                                        "value": {
-                                          "DataType": {
-                                            "Int": 0
-                                          }
-                                        },
-                                        "next": null,
-                                        "line": 4,
-                                        "column": 17,
-                                        "is_statement": false
-                                      }
-                                    }
-                                  },
-                                  "next": {
-                                    "value": "EndStatement",
-                                    "next": null,
-                                    "line": 5,
-                                    "column": 5,
-                                    "is_statement": false
-                                  },
-                                  "line": 4,
-                                  "column": 17,
-                                  "is_statement": false
-                                }
-                              ]
-                            },
-                            "next": null,
-                            "line": 6,
-                            "column": 5,
-                            "is_statement": false
-                          }
-                        ]
-                      }
-                    },
-                    "next": {
-                      "value": {
-                        "ControlFlow": {
-                          "If": [
-                            {
-                              "value": {
-                                "Operator": {
-                                  "Eq": [
-                                    {
-                                      "value": {
-                                        "Variable": [
-                                          {
-                                            "value": "Null",
-                                            "next": null,
-                                            "line": 6,
-                                            "column": 10,
-                                            "is_statement": false
-                                          },
-                                          "n",
-                                          false,
-                                          false
-                                        ]
-                                      },
-                                      "next": null,
-                                      "line": 6,
-                                      "column": 10,
-                                      "is_statement": false
-                                    },
-                                    {
-                                      "value": {
-                                        "DataType": {
-                                          "Int": 1
-                                        }
-                                      },
-                                      "next": null,
-                                      "line": 6,
-                                      "column": 14,
-                                      "is_statement": false
-                                    }
-                                  ]
-                                }
-                              },
-                              "next": null,
-                              "line": 6,
-                              "column": 14,
-                              "is_statement": false
-                            },
-                            {
-                              "value": {
-                                "Block": [
-                                  {
-                                    "value": {
-                                      "ControlFlow": {
-                                        "Return": {
-                                          "value": {
-                                            "DataType": {
-                                              "Int": 1
-                                            }
-                                          },
-                                          "next": null,
-                                          "line": 7,
-                                          "column": 17,
-                                          "is_statement": false
-                                        }
-                                      }
-                                    },
-                                    "next": {
-                                      "value": "EndStatement",
-                                      "next": null,
-                                      "line": 8,
-                                      "column": 5,
-                                      "is_statement": false
-                                    },
-                                    "line": 7,
-                                    "column": 17,
-                                    "is_statement": true
-                                  }
-                                ]
-                              },
-                              "next": null,
-                              "line": 10,
-                              "column": 5,
-                              "is_statement": false
-                            }
-                          ]
-                        }
-                      },
-                      "next": {
-                        "value": {
-                          "ControlFlow": {
-                            "Return": {
-                              "value": {
-                                "Operator": {
-                                  "Add": [
-                                    {
-                                      "value": {
-                                        "Call": [
-                                          "f",
-                                          [
-                                            {
-                                              "value": {
-                                                "Operator": {
-                                                  "Sub": [
-                                                    {
-                                                      "value": {
-                                                        "Variable": [
-                                                          {
-                                                            "value": "Null",
-                                                            "next": null,
-                                                            "line": 10,
-                                                            "column": 16,
-                                                            "is_statement": false
-                                                          },
-                                                          "n",
-                                                          false,
-                                                          false
-                                                        ]
-                                                      },
-                                                      "next": null,
-                                                      "line": 10,
-                                                      "column": 16,
-                                                      "is_statement": false
-                                                    },
-                                                    {
-                                                      "value": {
-                                                        "DataType": {
-                                                          "Int": 1
-                                                        }
-                                                      },
-                                                      "next": null,
-                                                      "line": 10,
-                                                      "column": 19,
-                                                      "is_statement": false
-                                                    }
-                                                  ]
-                                                }
-                                              },
-                                              "next": null,
-                                              "line": 10,
-                                              "column": 19,
-                                              "is_statement": false
-                                            }
-                                          ],
-                                          false
-                                        ]
-                                      },
-                                      "next": null,
-                                      "line": 10,
-                                      "column": 21,
-                                      "is_statement": true
-                                    },
-                                    {
-                                      "value": {
-                                        "Call": [
-                                          "f",
-                                          [
-                                            {
-                                              "value": {
-                                                "Operator": {
-                                                  "Sub": [
-                                                    {
-                                                      "value": {
-                                                        "Variable": [
-                                                          {
-                                                            "value": "Null",
-                                                            "next": null,
-                                                            "line": 10,
-                                                            "column": 27,
-                                                            "is_statement": false
-                                                          },
-                                                          "n",
-                                                          false,
-                                                          false
-                                                        ]
-                                                      },
-                                                      "next": null,
-                                                      "line": 10,
-                                                      "column": 27,
-                                                      "is_statement": false
-                                                    },
-                                                    {
-                                                      "value": {
-                                                        "DataType": {
-                                                          "Int": 2
-                                                        }
-                                                      },
-                                                      "next": null,
-                                                      "line": 10,
-                                                      "column": 30,
-                                                      "is_statement": false
-                                                    }
-                                                  ]
-                                                }
-                                              },
-                                              "next": null,
-                                              "line": 10,
-                                              "column": 30,
-                                              "is_statement": false
-                                            }
-                                          ],
-                                          false
-                                        ]
-                                      },
-                                      "next": null,
-                                      "line": 10,
-                                      "column": 31,
-                                      "is_statement": true
-                                    }
-                                  ]
-                                }
-                              },
-                              "next": null,
-                              "line": 10,
-                              "column": 31,
-                              "is_statement": false
-                            }
-                          }
-                        },
-                        "next": {
-                          "value": "EndStatement",
-                          "next": null,
-                          "line": 11,
-                          "column": 1,
-                          "is_statement": false
-                        },
-                        "line": 10,
-                        "column": 31,
-                        "is_statement": true
-                      },
-                      "line": 10,
-                      "column": 5,
-                      "is_statement": true
-                    },
-                    "line": 6,
-                    "column": 5,
-                    "is_statement": true
-                  }
-                ]
-              },
-              "next": null,
-              "line": 11,
-              "column": 1,
-              "is_statement": false
-            },
-            {
-              "value": "Null",
-              "next": null,
-              "line": 2,
-              "column": 6,
-              "is_statement": false
-            },
-            false
-          ]
-        }
-      },
-      "next": null,
-      "line": 11,
-      "column": 1,
-      "is_statement": false
-    },
-    "line": 2,
-    "column": 1,
-    "is_statement": false
   }
 }
