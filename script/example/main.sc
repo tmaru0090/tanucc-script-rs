@@ -22,7 +22,11 @@ impl TestClass{
 fn test(&mut self){
 }
 fn main(){
+  for i in 0..33{
+    let a = i;
+  }
   let b = 1000;
+  let mut c = &mut b;
   let paths = [
                 "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",
  /*               "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",

@@ -392,6 +392,7 @@ impl<'a> Parser<'a> {
         let mut node = Node::default();
         let mut is_reference = false;
         let mut is_mutable = false;
+        let mut is_dereference = false;
         if token.token_type() == TokenType::AtSign {
             self.next_token();
             token = self.current_token().unwrap().clone();
@@ -406,6 +407,13 @@ impl<'a> Parser<'a> {
                 token = self.current_token().unwrap().clone();
                 is_mutable = true;
             }
+        }
+        if token.token_type() == TokenType::Mul {
+            self.next_token();
+            token = self.current_token().unwrap().clone();
+            is_dereference = true;
+            return Ok(self.parse_single_statement().unwrap()?);
+            // panic!("{:?}",self.current_token());
         }
 
         match self.current_token().unwrap().token_type() {
@@ -1303,6 +1311,9 @@ impl<'a> Parser<'a> {
             self.next_token(); // =
 
             value_node = self.expr()?;
+            if self.current_token().unwrap().token_type() == TokenType::Semi {
+                self.is_statement = true;
+            }
 
             Ok(Box::new(Node {
                 value: NodeValue::Assign(
@@ -1379,23 +1390,7 @@ impl<'a> Parser<'a> {
             )))
         } else {
             Err(String::from(""))
-        } /* else {
-              if self.current_token().unwrap().token_type() == TokenType::Semi {
-                  self.is_statement = true;
-              }
-              Ok(Box::new(Node::new(
-                  NodeValue::Declaration(Declaration::Struct(
-                      var.clone(),
-                      vec![Parser::<'a>::new_null(
-                          self.current_token().unwrap().line(),
-                          self.current_token().unwrap().column(),
-                      )],
-                  )),
-                  None,
-                  self.current_token().unwrap().line(),
-                  self.current_token().unwrap().column(),
-              )))
-          }*/
+        }
     }
 
     fn parse_struct_definition(&mut self) -> R<Box<Node>, String> {
