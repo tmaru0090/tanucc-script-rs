@@ -1,6 +1,7 @@
 use indexmap::IndexMap;
 use serde_json::Value;
 use uuid::Uuid;
+
 // 変数情報
 #[derive(Debug, Clone)]
 pub struct Variable {

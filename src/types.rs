@@ -162,6 +162,33 @@ pub enum NodeValue {
     Null,                                      // 値なし
     Unknown,                                   // 不明な値(通常到達はしない値)
 }
+
+#[cfg(any(feature = "full", feature = "decoder"))]
+pub enum SystemValue {
+    Usize(usize),
+    U8(u8),
+    U16(u16),
+    U32(u32),
+    I8(i8),
+    I16(i16),
+    I32(i32),
+    I64(i64),
+    F32(f32),
+    F64(f64),
+    String(String),
+    Array(Vec<Box<SystemValue>>),
+    Pointer(Box<SystemValue>),
+    Null,
+}
+
+// デフォルト値(デフォルト値はI32(0))
+#[cfg(any(feature = "full", feature = "decoder"))]
+impl Default for SystemType {
+    fn default() -> Self {
+        SystemType::I32(0)
+    }
+}
+
 // デフォルト値(デフォルト値はNull)
 #[cfg(any(feature = "full", feature = "parser"))]
 impl Default for NodeValue {

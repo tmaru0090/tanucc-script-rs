@@ -27,10 +27,11 @@ fn main(){
   }
   let b = 1000;
   let mut c = &mut b;
+
   let paths = [
                 "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",
- /*               "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",
-                "C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav",
+                "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",
+ /*               "C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3",
                 "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-densetu.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-end.mp3",

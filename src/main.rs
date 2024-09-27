@@ -52,12 +52,11 @@ fn main() -> R<(), String> {
             eprintln!("{}", e);
             Decoder::new()
         }
-    };
-    decoder
-        .generate_doc(true)
-        .generate_ast_file(true)
-        .generate_error_log_file(true)
-        .measured_decode_time(true);
+    }
+    .generate_doc(true)
+    .generate_ast_file(true)
+    .generate_error_log_file(true)
+    .measured_decode_time(true);
     #[cfg(any(feature = "full", feature = "decoder"))]
     match decoder.decode() {
         Ok(v) => {

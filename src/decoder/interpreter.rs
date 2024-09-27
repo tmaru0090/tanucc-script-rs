@@ -155,6 +155,23 @@ fn show_messagebox(
     response
 }
 
+#[derive(Debug, Clone, Property)]
+pub struct TypeChecker {}
+impl TypeChecker {
+    pub fn new() -> Self {
+        TypeChecker {}
+    }
+
+    // 型変換
+    pub fn convert_to_value(&mut self, value: &Value) -> R<SystemValue, String> {
+        Ok(SystemValue::I32(0))
+    }
+    // 型チェック
+    pub fn check_type(&mut self, data_type: &String, value: &Value) -> R<(), String> {
+        Ok(())
+    }
+}
+
 // メイン実行環境
 #[derive(Debug, Clone, Property)]
 pub struct Decoder {
@@ -189,22 +206,30 @@ pub struct Decoder {
     entry_func: (bool, String), // main関数の有無(フラグ,見つかった関数名(main|Main))
 }
 impl Decoder {
-    pub fn generate_doc(&mut self, flag: bool) -> &mut Self {
-        self.generated_doc = flag;
-        self
+    pub fn generate_doc(self, flag: bool) -> Self {
+        Decoder {
+            generated_doc: flag,
+            ..self
+        }
     }
 
-    pub fn measured_decode_time(&mut self, flag: bool) -> &mut Self {
-        self.measure_decode_time = flag;
-        self
+    pub fn measured_decode_time(self, flag: bool) -> Self {
+        Decoder {
+            measure_decode_time: flag,
+            ..self
+        }
     }
-    pub fn generate_ast_file(&mut self, flag: bool) -> &mut Self {
-        self.generated_ast_file = flag;
-        self
+    pub fn generate_ast_file(self, flag: bool) -> Self {
+        Decoder {
+            generated_ast_file: flag,
+            ..self
+        }
     }
-    pub fn generate_error_log_file(&mut self, flag: bool) -> &mut Self {
-        self.generated_error_log_file = flag;
-        self
+    pub fn generate_error_log_file(self, flag: bool) -> Self {
+        Decoder {
+            generated_error_log_file: flag,
+            ..self
+        }
     }
 
     fn generate_html_from_comments(&mut self) -> String {
