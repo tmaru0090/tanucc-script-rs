@@ -163,11 +163,11 @@ impl TypeChecker {
     }
 
     // 型変換
-    pub fn convert_to_value(&mut self, value: &Value) -> R<SystemValue, String> {
+    pub fn convert_to_value(&mut self, value: &SystemValue) -> R<SystemValue, String> {
         Ok(SystemValue::I32(0))
     }
     // 型チェック
-    pub fn check_type(&mut self, data_type: &String, value: &Value) -> R<(), String> {
+    pub fn check_type(&mut self,value: &SystemValue) -> R<(), String> {
         Ok(())
     }
 }
@@ -468,108 +468,6 @@ impl Decoder {
             Value::String(_) => "string".to_string(),
             Value::Bool(_) => "bool".to_string(),
             _ => "unknown".to_string(),
-        }
-    }
-
-    fn check_type(&self, value: &Value, expected_type: &str) -> R<Value, String> {
-        let (file_name, node) = if let Some((file_name, node)) = self.current_node.clone() {
-            (file_name, node)
-        } else {
-            (String::new(), Box::new(Node::default()))
-        };
-        // 型定義が存在するか確認
-        if !self.context.type_context.contains_key(expected_type) {
-            return Err(compile_error!(
-                "error",
-                node.clone().line(),
-                node.clone().column(),
-                &file_name,
-                &self.file_contents.get(&file_name).unwrap(),
-                "Type '{}' is not defined",
-                expected_type
-            ));
-        }
-
-        match expected_type {
-            "unit" | "void" => Ok(Value::Null),
-            "i32" => {
-                if let Some(num) = value.as_i64() {
-                    match i32::try_from(num) {
-                        Ok(num_i32) => Ok(Value::Number(serde_json::Number::from(num_i32))),
-                        Err(_) => Err(compile_error!(
-                            "error",
-                            node.clone().line(),
-                            node.clone().column(),
-                            &file_name,
-                            &self.file_contents.get(&file_name).unwrap(),
-                            "Value out of range for i32: {:?}",
-                            num
-                        )),
-                    }
-                } else {
-                    Err(compile_error!(
-                        "error",
-                        node.clone().line(),
-                        node.clone().column(),
-                        &file_name,
-                        &self.file_contents.get(&file_name).unwrap(),
-                        "Type mismatch for i32: {:?}",
-                        value
-                    ))
-                }
-            }
-            "i64" => {
-                if let Some(num) = value.as_i64() {
-                    Ok(Value::Number(serde_json::Number::from(num)))
-                } else {
-                    Err(compile_error!(
-                        "error",
-                        node.clone().line(),
-                        node.clone().column(),
-                        &file_name,
-                        &self.file_contents.get(&file_name).unwrap(),
-                        "Type mismatch for i64: {:?}",
-                        value
-                    ))
-                }
-            }
-            "f32" => {
-                if let Some(num) = value.as_f64() {
-                    Ok(Value::Number(
-                        serde_json::Number::from_f64(num as f64)
-                            .unwrap_or_else(|| serde_json::Number::from(0)),
-                    ))
-                } else {
-                    Err(compile_error!(
-                        "error",
-                        node.clone().line(),
-                        node.clone().column(),
-                        &file_name,
-                        &self.file_contents.get(&file_name).unwrap(),
-                        "Type mismatch for f32: {:?}",
-                        value
-                    ))
-                }
-            }
-            "f64" => {
-                if let Some(num) = value.as_f64() {
-                    Ok(Value::Number(
-                        serde_json::Number::from_f64(num)
-                            .unwrap_or_else(|| serde_json::Number::from(0)),
-                    ))
-                } else {
-                    Err(compile_error!(
-                        "error",
-                        node.clone().line(),
-                        node.clone().column(),
-                        &file_name,
-                        &self.file_contents.get(&file_name).unwrap(),
-                        "Type mismatch for f64: {:?}",
-                        value
-                    ))
-                }
-            }
-            _ => Ok(value.clone()),
         }
     }
 
