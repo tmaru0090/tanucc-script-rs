@@ -212,7 +212,7 @@ impl<'a> Parser<'a> {
 
     pub fn new_variable(name: String, expr: Box<Node>, line: usize, column: usize) -> Box<Node> {
         let node = Node::new(
-            NodeValue::Variable(Parser::<'a>::new_null(line, column), name.clone()),
+            NodeValue::Variable(Parser::<'a>::new_null(line, column), name.clone(), false,false),
             Some(expr),
             line,
             column,
@@ -385,12 +385,18 @@ impl<'a> Parser<'a> {
         let mut token = self.current_token().unwrap().clone();
         let mut is_system = false;
         let mut node = Node::default();
+        let mut is_reference = false;
+
         if token.token_type() == TokenType::AtSign {
             self.next_token();
             token = self.current_token().unwrap().clone();
             is_system = true;
         }
-
+        if token.token_type() == TokenType::BitAnd {
+            self.next_token();
+            token = self.current_token().unwrap().clone();
+            is_reference = true;
+        }
         match self.current_token().unwrap().token_type() {
             TokenType::MultiComment(content, (line, column)) => {
                 self.next_token();
@@ -478,7 +484,12 @@ impl<'a> Parser<'a> {
                             data_type = self.parse_data_type()?;
                         }
                         node = Node::new(
-                            NodeValue::Variable(data_type, token.token_value().clone()),
+                            NodeValue::Variable(
+                                data_type,
+                                token.token_value().clone(),
+                                false,
+                                is_reference,
+                            ),
                             None,
                             self.current_token().unwrap().line(),
                             self.current_token().unwrap().column(),
@@ -542,6 +553,8 @@ impl<'a> Parser<'a> {
                     self.current_token().unwrap().column(),
                 ),
                 ident.token_value().clone(),
+                false,
+                false,
             ),
             None,
             self.current_token().unwrap().line(),
@@ -635,7 +648,7 @@ impl<'a> Parser<'a> {
                     ));
                 }
                 let arg_name = match arg.value() {
-                    NodeValue::Variable(_, ref name) => name.clone(),
+                    NodeValue::Variable(_, ref name, _,_) => name.clone(),
                     _ => return Err("Invalid argument name".to_string()),
                 };
                 args.push((data_type, arg_name));
@@ -697,7 +710,7 @@ impl<'a> Parser<'a> {
                 ));
             }
             let arg_name = match arg.value() {
-                NodeValue::Variable(_, ref name) => name.clone(),
+                NodeValue::Variable(_, ref name, _,_) => name.clone(),
                 _ => return Err("Invalid argument name".to_string()),
             };
             args.push((data_type, arg_name));
@@ -896,6 +909,8 @@ impl<'a> Parser<'a> {
                         self.current_token().unwrap().column(),
                     ),
                     start_token,
+                    false,
+                    false,
                 ),
                 None,
                 self.current_token().unwrap().line(),
@@ -913,6 +928,8 @@ impl<'a> Parser<'a> {
                             self.current_token().unwrap().column(),
                         ),
                         var,
+                        false,
+                        false,
                     ),
                     None,
                     self.current_token().unwrap().line(),
@@ -1029,6 +1046,8 @@ impl<'a> Parser<'a> {
                             self.current_token().unwrap().column(),
                         ),
                         _type_name,
+                        false,
+                        false,
                     ),
                     None,
                     self.current_token().unwrap().line(),
@@ -1094,6 +1113,8 @@ impl<'a> Parser<'a> {
                                 self.current_token().unwrap().column(),
                             ),
                             var,
+                            false,
+                            false,
                         ),
                         None,
                         self.current_token().unwrap().line(),
@@ -1103,7 +1124,6 @@ impl<'a> Parser<'a> {
                     value_node,
                     is_local,
                     is_mutable,
-                    false,
                 )),
                 next: None,
                 line: self.current_token().unwrap().line(),
@@ -1139,6 +1159,8 @@ impl<'a> Parser<'a> {
                                 self.current_token().unwrap().column(),
                             ),
                             var,
+                            false,
+                            false,
                         ),
                         None,
                         self.current_token().unwrap().line(),
@@ -1148,7 +1170,6 @@ impl<'a> Parser<'a> {
                     value_node,
                     is_local,
                     is_mutable,
-                    false,
                 )),
                 next: None,
                 line: self.current_token().unwrap().line(),
@@ -1156,13 +1177,7 @@ impl<'a> Parser<'a> {
                 is_statement: self.is_statement,
             }));
         }
-        let mut is_reference = false;
-        if self.current_token().unwrap().token_type() == TokenType::Reference {
-            is_reference = true;
-            self.next_token();
-        } else {
-            value_node = self.expr()?;
-        }
+        value_node = self.expr()?;
         if self.current_token().unwrap().token_type() == TokenType::Semi {
             self.is_statement = true;
         }
@@ -1188,6 +1203,8 @@ impl<'a> Parser<'a> {
                             self.current_token().unwrap().column(),
                         ),
                         var,
+                        false,
+                        false,
                     ),
                     None,
                     self.current_token().unwrap().line(),
@@ -1197,7 +1214,6 @@ impl<'a> Parser<'a> {
                 value_node,
                 is_local,
                 is_mutable,
-                is_reference,
             )),
             next: None,
             line: self.current_token().unwrap().line(),
@@ -1257,6 +1273,8 @@ impl<'a> Parser<'a> {
                                 self.current_token().unwrap().column(),
                             ),
                             var,
+                            false,
+                            false,
                         ),
                         None,
                         self.current_token().unwrap().line(),
@@ -1284,6 +1302,8 @@ impl<'a> Parser<'a> {
                                 self.current_token().unwrap().column(),
                             ),
                             var,
+                            false,
+                            false,
                         ),
                         None,
                         self.current_token().unwrap().line(),

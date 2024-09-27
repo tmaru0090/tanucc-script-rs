@@ -19,6 +19,8 @@ impl TestClass{
         let b:i32 = a;
     }
 }
+fn test(&self){
+}
 fn main(){
     let paths = [
                 "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",
@@ -44,6 +46,5 @@ fn main(){
 */
 
                 ];
-     
 //                music_play_lists(paths,3);
 }

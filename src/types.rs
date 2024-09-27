@@ -128,7 +128,7 @@ pub enum DataType {
 #[cfg(any(feature = "full", feature = "parser"))]
 #[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
 pub enum Declaration {
-    Variable(Box<Node>, Box<Node>, Box<Node>, bool, bool, bool),
+    Variable(Box<Node>, Box<Node>, Box<Node>, bool, bool), 
     Struct(String, Vec<Box<Node>>),
     Impl(String, Vec<Box<Node>>),
     Function(String, Vec<(Box<Node>, String)>, Box<Node>, Box<Node>, bool),
@@ -146,7 +146,7 @@ pub enum NodeValue {
     Declaration(Declaration),
     Assign(Box<Node>, Box<Node>, Box<Node>),
     Block(Vec<Box<Node>>),
-    Variable(Box<Node>, String),
+    Variable(Box<Node>, String,bool, bool),// 変数(型名,変数名,可変性フラグ,参照型フラグ)
     Call(String, Vec<Node>, bool),
     ScopeResolution(Vec<Box<Node>>),
     MultiComment(Vec<String>, (usize, usize)),
@@ -171,7 +171,7 @@ impl From<Box<Node>> for DataType {
     fn from(node: Box<Node>) -> Self {
         match *node {
             Node {
-                value: NodeValue::Variable(_, ref name),
+                value: NodeValue::Variable(_, ref name, _,_),
                 ..
             } => DataType::String(name.clone()),
             _ => DataType::Unit(()), // 他のケースに対するデフォルト処理

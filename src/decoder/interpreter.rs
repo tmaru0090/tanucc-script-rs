@@ -736,7 +736,7 @@ impl Decoder {
         }
 
         let name = match var_name.value {
-            NodeValue::Variable(_, ref v) => v.clone(),
+            NodeValue::Variable(_, ref v, _,_) => v.clone(),
             _ => String::new(),
         };
 
@@ -1392,7 +1392,6 @@ impl Decoder {
         value: &Box<Node>,
         is_local: &bool,
         is_mutable: &bool,
-        is_reference: &bool,
     ) -> R<Value, String> {
         // ステートメントフラグのチェック
         if !node.is_statement() {
@@ -1411,7 +1410,7 @@ impl Decoder {
 
         //info!("is_reference: {:?}", is_reference);
         let name = match var_name.value() {
-            NodeValue::Variable(_, v) => v,
+            NodeValue::Variable(_, v, _,_) => v,
             _ => String::new(),
         };
 
@@ -1445,7 +1444,7 @@ impl Decoder {
             }
 
             let v = match data_type.value {
-                NodeValue::Variable(_, ref v) => v.clone(),
+                NodeValue::Variable(_, ref v, _,_) => v.clone(),
                 _ => String::new(),
             };
             v_value = {
@@ -1455,7 +1454,7 @@ impl Decoder {
             };
             v_type = Value::String(v.into());
         }
-
+/*
         if *is_reference {
             // 参照型の場合、右辺の変数名を取り出してアドレスを取得して直接変更
             address = {
@@ -1466,7 +1465,7 @@ impl Decoder {
                 };
 
                 match value.value() {
-                    NodeValue::Variable(_, v) => {
+                    NodeValue::Variable(_, v, _) => {
                         if let Some(variable) = context.get(&v) {
                             variable.address
                         } else {
@@ -1507,7 +1506,7 @@ impl Decoder {
                     size: v_value.size(),
                 },
             );
-        } else {
+        } else {*/
             address = self.memory_mgr.allocate(v_value.clone());
             let context = if *is_local {
                 &mut self.context.local_context
@@ -1525,7 +1524,7 @@ impl Decoder {
                     size: v_value.size(),
                 },
             );
-        }
+        //}
 
         info!("VariableDeclaration: name = {:?}, data_type = {:?}, value = {:?}, address = {:?} is_mutable: {} is_local: {}", name, v_type, v_value, address,is_mutable,is_local);
         let line = self.current_node.clone().unwrap().1.line();
@@ -1542,7 +1541,7 @@ impl Decoder {
         _type: &Box<Node>,
     ) -> R<Value, String> {
         let name = match _type_name.value() {
-            NodeValue::Variable(_, v) => v,
+            NodeValue::Variable(_, v, _,_) => v,
             _ => String::new(),
         };
         if self.context.type_context.contains_key(&name) {
@@ -1712,7 +1711,7 @@ impl Decoder {
             _ => serde_json::Number::from(-1),
         };
         let var = match lhs.value() {
-            NodeValue::Variable(_, v) => v,
+            NodeValue::Variable(_, v, _,_) => v,
             _ => String::new(),
         };
 
@@ -1737,7 +1736,7 @@ impl Decoder {
             _ => serde_json::Number::from(-1),
         };
         let var = match lhs.value() {
-            NodeValue::Variable(_, v) => v,
+            NodeValue::Variable(_, v, _,_) => v,
             _ => String::new(),
         };
 
@@ -2103,7 +2102,7 @@ impl Decoder {
                     size: element.size(),
                 };
                 let var = match value.value {
-                    NodeValue::Variable(_, ref v) => v.clone(),
+                    NodeValue::Variable(_, ref v, _,_) => v.clone(),
                     _ => String::new(),
                 };
                 self.context.local_context.insert(var.clone(), variable);
@@ -2263,14 +2262,14 @@ impl Decoder {
             .iter()
             .filter_map(|m| {
                 // メンバーの名前を取得
-                let member_name = if let NodeValue::Variable(_, ref v) = m.value {
+                let member_name = if let NodeValue::Variable(_, ref v, _,_) = m.value {
                     v.clone()
                 } else {
                     return None; // 変数以外のメンバーはスキップ
                 };
 
                 // メンバーの型を取得
-                let member_type = if let NodeValue::Variable(ref v, _) = m.value {
+                let member_type = if let NodeValue::Variable(ref v, _, _,_) = m.value {
                     if let NodeValue::DataType(ref data_type) = v.value {
                         match data_type {
                             DataType::Int(_) => "int".to_string(),
@@ -2439,7 +2438,6 @@ impl Decoder {
                 value,
                 is_local,
                 is_mutable,
-                is_reference,
             )) => {
                 result = self.eval_variable_declaration(
                     &node.clone(),
@@ -2448,13 +2446,12 @@ impl Decoder {
                     value,
                     is_local,
                     is_mutable,
-                    is_reference,
                 )?;
             }
             NodeValue::Declaration(Declaration::Type(type_name, _type)) => {
                 result = self.eval_type_declaration(type_name, _type)?;
             }
-            NodeValue::Variable(_, name) => {
+            NodeValue::Variable(_, name, _,_) => {
                 result = self.eval_variable(name)?;
             }
             NodeValue::ControlFlow(ControlFlow::Return(ret)) => {
