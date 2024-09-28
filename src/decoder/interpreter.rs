@@ -12,6 +12,7 @@ use anyhow::Result as R;
 use chrono::{DateTime, Local, Utc};
 use hostname::get;
 use indexmap::IndexMap;
+use libloading::{Library, Symbol};
 use log::info;
 use property_rs::Property;
 use rodio::{source::Source, OutputStream};
@@ -42,7 +43,6 @@ use win_msgbox::{
     AbortRetryIgnore, CancelTryAgainContinue, Icon, MessageBox, Okay, OkayCancel, RetryCancel,
     YesNo, YesNoCancel,
 };
-
 fn get_duration(file_path: &str) -> Option<Duration> {
     // ファイルを開く
     let file = File::open(file_path).ok()?;
@@ -1110,6 +1110,26 @@ impl Decoder {
                         let args: Vec<String> = std::env::args().collect();
                         let value: SystemValue = SystemValue::from(args);
                         return Ok(value);
+                    }
+
+                    "raw" => {
+                        if args.len() != 1 {
+                            return Err("exit expects exactly one argument".into());
+                        }
+                        let ptr = match &evaluated_args[0] {
+                            SystemValue::Pointer(v) => v.clone(),
+                            _ => {
+                                return Err("cmd expects the first argument to be a pointer".into())
+                            }
+                        };
+                        unsafe {
+                            // Boxが指す値のアドレスを取得
+                            let raw_pointer: *mut SystemValue = Box::into_raw(ptr);
+                            let raw_address = raw_pointer as usize;
+                            // メモリを解放するために戻す
+                            let _ = unsafe { Box::from_raw(raw_pointer) }; // ここでメモリを解放
+                            return Ok(raw_address.into());
+                        }
                     }
                     "cmd" => {
                         if evaluated_args.len() < 1 {

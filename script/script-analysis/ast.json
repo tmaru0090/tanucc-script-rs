@@ -85,214 +85,46 @@
         },
         "next": {
           "value": {
-            "Declaration": {
-              "Variable": [
-                {
-                  "value": {
-                    "Variable": [
-                      {
-                        "value": "Null",
-                        "next": null,
-                        "line": 56,
-                        "column": 17,
-                        "is_statement": false
-                      },
-                      "a",
-                      false,
-                      false
-                    ]
-                  },
-                  "next": null,
-                  "line": 56,
-                  "column": 17,
-                  "is_statement": false
-                },
-                {
-                  "value": {
-                    "DataType": {
-                      "String": "u64"
-                    }
-                  },
-                  "next": null,
-                  "line": 56,
-                  "column": 11,
-                  "is_statement": false
-                },
-                {
-                  "value": {
-                    "DataType": {
-                      "Int": 1110
-                    }
-                  },
-                  "next": null,
-                  "line": 56,
-                  "column": 17,
-                  "is_statement": false
-                },
-                false,
-                false
+            "MultiComment": [
+              [
+                "",
+                "let a:u64 = 1110;",
+                "let b = a;",
+                "let mut ret = \"\";",
+                "let mut adasd:array = [10,10,true];",
+                "loop{",
+                "  if ret == \"okay\"{",
+                "    @exit(1);",
+                "  }",
+                "  ret = @show_msg_box(\"okaycancel\",\"\",\"\",\"information\");",
+                "}"
+              ],
+              [
+                55,
+                1
               ]
-            }
+            ]
           },
           "next": {
-            "value": "EndStatement",
-            "next": {
-              "value": {
-                "Declaration": {
-                  "Variable": [
-                    {
-                      "value": {
-                        "Variable": [
-                          {
-                            "value": "Null",
-                            "next": null,
-                            "line": 57,
-                            "column": 10,
-                            "is_statement": false
-                          },
-                          "b",
-                          false,
-                          false
-                        ]
-                      },
-                      "next": null,
-                      "line": 57,
-                      "column": 10,
-                      "is_statement": false
-                    },
-                    {
-                      "value": {
-                        "DataType": {
-                          "Unit": null
-                        }
-                      },
-                      "next": null,
-                      "line": 57,
-                      "column": 5,
-                      "is_statement": false
-                    },
-                    {
-                      "value": {
-                        "Variable": [
-                          {
-                            "value": "Null",
-                            "next": null,
-                            "line": 57,
-                            "column": 10,
-                            "is_statement": false
-                          },
-                          "a",
-                          false,
-                          false
-                        ]
-                      },
-                      "next": null,
-                      "line": 57,
-                      "column": 10,
-                      "is_statement": false
-                    },
-                    false,
-                    false
-                  ]
-                }
-              },
-              "next": {
-                "value": "EndStatement",
-                "next": {
-                  "value": {
-                    "Call": [
-                      "show_msg_box",
-                      [
-                        {
-                          "value": {
-                            "DataType": {
-                              "String": "okay"
-                            }
-                          },
-                          "next": null,
-                          "line": 58,
-                          "column": 21,
-                          "is_statement": false
-                        },
-                        {
-                          "value": {
-                            "DataType": {
-                              "String": ""
-                            }
-                          },
-                          "next": null,
-                          "line": 58,
-                          "column": 24,
-                          "is_statement": false
-                        },
-                        {
-                          "value": {
-                            "DataType": {
-                              "String": ""
-                            }
-                          },
-                          "next": null,
-                          "line": 58,
-                          "column": 27,
-                          "is_statement": false
-                        },
-                        {
-                          "value": {
-                            "DataType": {
-                              "String": "information"
-                            }
-                          },
-                          "next": null,
-                          "line": 58,
-                          "column": 41,
-                          "is_statement": false
-                        }
-                      ],
-                      true
-                    ]
-                  },
-                  "next": {
-                    "value": "EndStatement",
-                    "next": {
-                      "value": {
-                        "SingleComment": [
-                          "@play_music(\"C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3\");",
-                          [
-                            59,
-                            1
-                          ]
-                        ]
-                      },
-                      "next": null,
-                      "line": 59,
-                      "column": 1,
-                      "is_statement": false
-                    },
-                    "line": 59,
-                    "column": 1,
-                    "is_statement": false
-                  },
-                  "line": 58,
-                  "column": 42,
-                  "is_statement": true
-                },
-                "line": 58,
-                "column": 1,
-                "is_statement": false
-              },
-              "line": 57,
-              "column": 10,
-              "is_statement": true
+            "value": {
+              "SingleComment": [
+                "@play_music(\"C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3\");",
+                [
+                  66,
+                  1
+                ]
+              ]
             },
-            "line": 57,
+            "next": null,
+            "line": 66,
             "column": 1,
             "is_statement": false
           },
-          "line": 56,
-          "column": 17,
-          "is_statement": true
+          "line": 66,
+          "column": 1,
+          "is_statement": false
         },
-        "line": 56,
+        "line": 55,
         "column": 1,
         "is_statement": false
       },

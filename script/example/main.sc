@@ -52,7 +52,7 @@ fn main(){
  //               music_play_lists(paths,3);
 }
 */
-
+/*
 let a:u64 = 1110;
 let b = a;
 let mut ret = "";
@@ -62,5 +62,6 @@ loop{
     @exit(1);
   }
   ret = @show_msg_box("okaycancel","","","information");
-}
+}*/
 //@play_music("C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3");
+

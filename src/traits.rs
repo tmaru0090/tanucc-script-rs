@@ -37,6 +37,7 @@ impl Size for SystemValue {
         }
     }
 }
+
 #[cfg(any(feature = "full", feature = "decoder"))]
 impl From<Box<Node>> for SystemValue {
     fn from(node: Box<Node>) -> Self {
@@ -854,6 +855,83 @@ impl From<Vec<bool>> for SystemValue {
         SystemValue::Array(vec)
     }
 }
+impl From<usize> for SystemValue {
+    fn from(value: usize) -> Self {
+        SystemValue::Usize(value)
+    }
+}
+
+impl From<u8> for SystemValue {
+    fn from(value: u8) -> Self {
+        SystemValue::U8(value)
+    }
+}
+
+impl From<u16> for SystemValue {
+    fn from(value: u16) -> Self {
+        SystemValue::U16(value)
+    }
+}
+
+impl From<u32> for SystemValue {
+    fn from(value: u32) -> Self {
+        SystemValue::U32(value)
+    }
+}
+
+impl From<u64> for SystemValue {
+    fn from(value: u64) -> Self {
+        SystemValue::U64(value)
+    }
+}
+
+impl From<i8> for SystemValue {
+    fn from(value: i8) -> Self {
+        SystemValue::I8(value)
+    }
+}
+
+impl From<i16> for SystemValue {
+    fn from(value: i16) -> Self {
+        SystemValue::I16(value)
+    }
+}
+
+impl From<i32> for SystemValue {
+    fn from(value: i32) -> Self {
+        SystemValue::I32(value)
+    }
+}
+
+impl From<i64> for SystemValue {
+    fn from(value: i64) -> Self {
+        SystemValue::I64(value)
+    }
+}
+
+impl From<f32> for SystemValue {
+    fn from(value: f32) -> Self {
+        SystemValue::F32(value)
+    }
+}
+
+impl From<f64> for SystemValue {
+    fn from(value: f64) -> Self {
+        SystemValue::F64(value)
+    }
+}
+
+
+impl From<bool> for SystemValue {
+    fn from(value: bool) -> Self {
+        SystemValue::Bool(value)
+    }
+}
+
+
+
+
+
 // 1要素のタプル
 impl<T1: Into<SystemValue>> From<(T1,)> for SystemValue {
     fn from(tuple: (T1,)) -> Self {

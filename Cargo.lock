@@ -1004,6 +1004,7 @@ dependencies = [
  "env_logger",
  "hostname",
  "indexmap",
+ "libloading",
  "log",
  "property-rs",
  "rodio",
