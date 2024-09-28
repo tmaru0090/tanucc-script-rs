@@ -1,5 +1,6 @@
 /*example/main.sc*/
 // テスト用
+/*
 @include "std.sc"
 @include "example/test.sc"
 
@@ -31,7 +32,7 @@ fn main(){
   let paths = [
                 "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",
- /*               "C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav",
+                "C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3",
                 "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-densetu.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-end.mp3",
@@ -45,12 +46,21 @@ fn main(){
                 "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw2-title.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/ryokugan.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/th3_05.mp3",
-                "C:/Users/tanukimaru/Downloads/sounds/write-san-end (1).wav",
-                "C:/Users/tanukimaru/Downloads/sounds/write-san-end (2).wav",
                 "C:/Users/tanukimaru/Downloads/sounds/write-san-end.wav",
                 "C:/Users/tanukimaru/Downloads/sounds/繧ｫ繝ｼ繧ｽ繝ｫ遘ｻ蜍・.mp3"
-*/
-
                 ];
  //               music_play_lists(paths,3);
 }
+*/
+
+let a:u64 = 1110;
+let b = a;
+let mut ret = "";
+let mut adasd:array = [10,10,true];
+loop{
+  if ret == "okay"{
+    @exit(1);
+  }
+  ret = @show_msg_box("okaycancel","","","information");
+}
+//@play_music("C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3");

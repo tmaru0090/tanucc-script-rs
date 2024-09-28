@@ -1,15 +1,14 @@
+use crate::types::*;
 use indexmap::IndexMap;
-use serde_json::Value;
 use uuid::Uuid;
 
 // 変数情報
 #[derive(Debug, Clone)]
 pub struct Variable {
-    pub data_type: Value, // 型
-    pub value: Value,     // 値
-    pub address: Uuid,    // アドレス
-    pub is_mutable: bool, // 可変性
-    pub size: usize,      // サイズ
+    pub value: SystemValue, // 値
+    pub address: Uuid,      // アドレス
+    pub is_mutable: bool,   // 可変性
+    pub size: usize,        // サイズ
 }
 
 // コンテキスト

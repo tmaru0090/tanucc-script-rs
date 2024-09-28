@@ -6,11 +6,9 @@ pub static RESERVED_WORDS: &[&str] = &[
     "&=", "|", "|=", "^", "~", "^=",
 ];
 
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
-
 #[cfg(any(feature = "full", feature = "parser"))]
 use crate::parser::syntax::Node;
+use serde::{Deserialize, Serialize};
 // トークンの種類
 #[derive(PartialEq, Debug, Clone, Serialize)]
 pub enum TokenType {
@@ -164,12 +162,13 @@ pub enum NodeValue {
 }
 
 #[cfg(any(feature = "full", feature = "decoder"))]
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SystemValue {
     Usize(usize),
     U8(u8),
     U16(u16),
     U32(u32),
+    U64(u64),
     I8(i8),
     I16(i16),
     I32(i32),
@@ -178,156 +177,10 @@ pub enum SystemValue {
     F64(f64),
     String(String),
     Bool(bool),
-    Array(Vec<Box<SystemValue>>),
+    Array(Vec<SystemValue>),
     Pointer(Box<SystemValue>),
+    Tuple(Vec<SystemValue>),
     Null,
-}
-impl From<Box<Node>> for SystemValue {
-    fn from(node: Box<Node>) -> Self {
-        match *node {
-            Node {
-                value: NodeValue::Variable(_, ref name, _, _),
-                ..
-            } => SystemValue::String(name.clone()),
-            Node {
-                value: NodeValue::DataType(DataType::String(ref value)),
-                ..
-            } => SystemValue::String(value.clone()),
-
-            Node {
-                value: NodeValue::DataType(DataType::Int(ref value)),
-                ..
-            } => {
-                let int_value = *value;
-                if int_value >= 0 {
-                    // 符号なしに変換
-                    if int_value <= u8::MAX as i64 {
-                        SystemValue::U8(int_value as u8)
-                    } else if int_value <= u16::MAX as i64 {
-                        SystemValue::U16(int_value as u16)
-                    } else if int_value <= u32::MAX as i64 {
-                        SystemValue::U32(int_value as u32)
-                    } else if int_value <= usize::MAX as i64 {
-                        SystemValue::Usize(int_value as usize)
-                    } else {
-                        SystemValue::I64(int_value)
-                    }
-                } else {
-                    // 符号ありに変換
-                    if int_value >= i8::MIN as i64 && int_value <= i8::MAX as i64 {
-                        SystemValue::I8(int_value as i8)
-                    } else if int_value >= i16::MIN as i64 && int_value <= i16::MAX as i64 {
-                        SystemValue::I16(int_value as i16)
-                    } else if int_value >= i32::MIN as i64 && int_value <= i32::MAX as i64 {
-                        SystemValue::I32(int_value as i32)
-                    } else {
-                        SystemValue::I64(int_value)
-                    }
-                }
-            }
-
-            Node {
-                value: NodeValue::DataType(DataType::Float(ref value)),
-                ..
-            } => {
-                let float_value = *value;
-                if float_value >= f32::MIN as f64 && float_value <= f32::MAX as f64 {
-                    SystemValue::F32(float_value as f32)
-                } else {
-                    SystemValue::F64(float_value)
-                }
-            }
-            Node {
-                value: NodeValue::DataType(DataType::Bool(ref value)),
-                ..
-            } => SystemValue::Bool(value.clone()),
-
-            Node {
-                value: NodeValue::Declaration(Declaration::Array(ref data_type, ref value)),
-                ..
-            } => {
-                let mut vec: Vec<Box<SystemValue>> = vec![];
-                for v in value {
-                    let array_value = match **v {
-                        Node {
-                            value: NodeValue::Variable(_, ref name, _, _),
-                            ..
-                        } => SystemValue::String(name.clone()),
-                        Node {
-                            value: NodeValue::DataType(DataType::String(ref value)),
-                            ..
-                        } => SystemValue::String(value.clone()),
-
-                        Node {
-                            value: NodeValue::DataType(DataType::Int(ref value)),
-                            ..
-                        } => {
-                            let int_value = *value;
-                            if int_value >= 0 {
-                                // 符号なしに変換
-                                if int_value <= u8::MAX as i64 {
-                                    SystemValue::U8(int_value as u8)
-                                } else if int_value <= u16::MAX as i64 {
-                                    SystemValue::U16(int_value as u16)
-                                } else if int_value <= u32::MAX as i64 {
-                                    SystemValue::U32(int_value as u32)
-                                } else if int_value <= usize::MAX as i64 {
-                                    SystemValue::Usize(int_value as usize)
-                                } else {
-                                    SystemValue::I64(int_value)
-                                }
-                            } else {
-                                // 符号ありに変換
-                                if int_value >= i8::MIN as i64 && int_value <= i8::MAX as i64 {
-                                    SystemValue::I8(int_value as i8)
-                                } else if int_value >= i16::MIN as i64
-                                    && int_value <= i16::MAX as i64
-                                {
-                                    SystemValue::I16(int_value as i16)
-                                } else if int_value >= i32::MIN as i64
-                                    && int_value <= i32::MAX as i64
-                                {
-                                    SystemValue::I32(int_value as i32)
-                                } else {
-                                    SystemValue::I64(int_value)
-                                }
-                            }
-                        }
-
-                        Node {
-                            value: NodeValue::DataType(DataType::Float(ref value)),
-                            ..
-                        } => {
-                            let float_value = *value;
-                            if float_value >= f32::MIN as f64 && float_value <= f32::MAX as f64 {
-                                SystemValue::F32(float_value as f32)
-                            } else {
-                                SystemValue::F64(float_value)
-                            }
-                        }
-
-                        Node {
-                            value: NodeValue::DataType(DataType::Bool(ref value)),
-                            ..
-                        } => SystemValue::Bool(value.clone()),
-
-                        _ => SystemValue::Null,
-                    };
-                    vec.push(Box::new(array_value));
-                }
-                SystemValue::Array(vec)
-            }
-
-            _ => SystemValue::Null,
-        }
-    }
-}
-// デフォルト値(デフォルト値はI32(0))
-#[cfg(any(feature = "full", feature = "decoder"))]
-impl Default for SystemValue {
-    fn default() -> Self {
-        SystemValue::I32(0)
-    }
 }
 
 // デフォルト値(デフォルト値はNull)
@@ -338,6 +191,7 @@ impl Default for NodeValue {
     }
 }
 
+#[cfg(any(feature = "full", feature = "parser"))]
 impl From<Box<Node>> for DataType {
     fn from(node: Box<Node>) -> Self {
         match *node {

@@ -30,26 +30,48 @@ body { font-family: Arial, sans-serif; }
 <div id="comments">
 <div class="comment-container">
 <a href="#" class="comment-link" onclick="toggleComments(1,1)">Line 1 Column 1</a>
-<div id="comments-01-01" class="slide hide"><div class="comment" data-comment=" フィボナッチ"> フィボナッチ</div>
+<div id="comments-01-01" class="slide hide"><div class="comment" data-comment="example/main.sc">example/main.sc</div>
 </div>
 </div>
 <div class="comment-container">
 <a href="#" class="comment-link" onclick="toggleComments(2,1)">Line 2 Column 1</a>
-<div id="comments-02-01" class="slide hide"><div class="comment" data-comment=""></div>
-<div class="comment" data-comment="type i32 = i32;">type i32 = i32;</div>
-<div class="comment" data-comment="type f32 = f32;">type f32 = f32;</div>
-<div class="comment" data-comment="type i64 = i64;">type i64 = i64;</div>
-<div class="comment" data-comment="type f64 = f64;">type f64 = f64;</div>
-<div class="comment" data-comment="type string = string;">type string = string;</div>
-<div class="comment" data-comment="type array = array<T>;">type array = array<T>;</div>
-<div class="comment" data-comment="type bool = bool;">type bool = bool;</div>
-<div class="comment" data-comment="struct Vector;">struct Vector;</div>
-<div class="comment" data-comment="struct HashMap;">struct HashMap;</div>
+<div id="comments-02-01" class="slide hide"><div class="comment" data-comment=" テスト用"> テスト用</div>
 </div>
 </div>
 <div class="comment-container">
-<a href="#" class="comment-link" onclick="toggleComments(32,2)">Line 32 Column 2</a>
-<div id="comments-32-02" class="slide hide"><div class="comment" data-comment="               "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",">               "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",</div>
+<a href="#" class="comment-link" onclick="toggleComments(3,1)">Line 3 Column 1</a>
+<div id="comments-03-01" class="slide hide"><div class="comment" data-comment=""></div>
+<div class="comment" data-comment="@include "std.sc"">@include "std.sc"</div>
+<div class="comment" data-comment="@include "example/test.sc"">@include "example/test.sc"</div>
+<div class="comment" data-comment=""></div>
+<div class="comment" data-comment="fn music_play_lists(paths,sleep_time){">fn music_play_lists(paths,sleep_time){</div>
+<div class="comment" data-comment="    for path in paths{">    for path in paths{</div>
+<div class="comment" data-comment="        @play_music(path);">        @play_music(path);</div>
+<div class="comment" data-comment="        @sleep(sleep_time);">        @sleep(sleep_time);</div>
+<div class="comment" data-comment="    }">    }</div>
+<div class="comment" data-comment="}">}</div>
+<div class="comment" data-comment="struct TestClass{">struct TestClass{</div>
+<div class="comment" data-comment="    member1:i32,">    member1:i32,</div>
+<div class="comment" data-comment="    member2:string,">    member2:string,</div>
+<div class="comment" data-comment="}">}</div>
+<div class="comment" data-comment="impl TestClass{">impl TestClass{</div>
+<div class="comment" data-comment="    fn test(&self){">    fn test(&self){</div>
+<div class="comment" data-comment="        let a:i32 = 1000;">        let a:i32 = 1000;</div>
+<div class="comment" data-comment="        let b:i32 = a;">        let b:i32 = a;</div>
+<div class="comment" data-comment="    }">    }</div>
+<div class="comment" data-comment="}">}</div>
+<div class="comment" data-comment="fn test(&mut self){">fn test(&mut self){</div>
+<div class="comment" data-comment="}">}</div>
+<div class="comment" data-comment="fn main(){">fn main(){</div>
+<div class="comment" data-comment="  for i in 0..33{">  for i in 0..33{</div>
+<div class="comment" data-comment="    let a = i;">    let a = i;</div>
+<div class="comment" data-comment="  }">  }</div>
+<div class="comment" data-comment="  let b = 1000;">  let b = 1000;</div>
+<div class="comment" data-comment="  let mut c = &mut b;">  let mut c = &mut b;</div>
+<div class="comment" data-comment=""></div>
+<div class="comment" data-comment="  let paths = [">  let paths = [</div>
+<div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",">                "C:/Users/tanukimaru/Downloads/sounds/dewprism-forest.wav",</div>
+<div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",">                "C:/Users/tanukimaru/Downloads/sounds/dewprism-town.wav",</div>
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav",">                "C:/Users/tanukimaru/Downloads/sounds/kisida-keizai.wav",</div>
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3",">                "C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3",</div>
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-densetu.wav",">                "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw-densetu.wav",</div>
@@ -64,10 +86,16 @@ body { font-family: Arial, sans-serif; }
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw2-title.wav",">                "C:/Users/tanukimaru/Downloads/sounds/pokemon-bw2-title.wav",</div>
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/ryokugan.wav",">                "C:/Users/tanukimaru/Downloads/sounds/ryokugan.wav",</div>
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/th3_05.mp3",">                "C:/Users/tanukimaru/Downloads/sounds/th3_05.mp3",</div>
-<div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/write-san-end (1).wav",">                "C:/Users/tanukimaru/Downloads/sounds/write-san-end (1).wav",</div>
-<div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/write-san-end (2).wav",">                "C:/Users/tanukimaru/Downloads/sounds/write-san-end (2).wav",</div>
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/write-san-end.wav",">                "C:/Users/tanukimaru/Downloads/sounds/write-san-end.wav",</div>
 <div class="comment" data-comment="                "C:/Users/tanukimaru/Downloads/sounds/繧ｫ繝ｼ繧ｽ繝ｫ遘ｻ蜍・.mp3"">                "C:/Users/tanukimaru/Downloads/sounds/繧ｫ繝ｼ繧ｽ繝ｫ遘ｻ蜍・.mp3"</div>
+<div class="comment" data-comment="                ];">                ];</div>
+<div class="comment" data-comment=" //               music_play_lists(paths,3);"> //               music_play_lists(paths,3);</div>
+<div class="comment" data-comment="}">}</div>
+</div>
+</div>
+<div class="comment-container">
+<a href="#" class="comment-link" onclick="toggleComments(59,1)">Line 59 Column 1</a>
+<div id="comments-59-01" class="slide hide"><div class="comment" data-comment="@play_music("C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3");">@play_music("C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3");</div>
 </div>
 </div>
 <div class="pagination">

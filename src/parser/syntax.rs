@@ -1,6 +1,7 @@
 use crate::compile_error;
 use crate::error::*;
 use crate::lexer::tokenizer::Token;
+use crate::traits::*;
 use crate::types::*;
 use anyhow::{anyhow, Context, Result as R};
 use log::{error, info, warn};
@@ -718,16 +719,6 @@ impl<'a> Parser<'a> {
                 self.current_token().unwrap().line(),
                 self.current_token().unwrap().column(),
             );
-            if self.current_token().unwrap().token_type() == TokenType::Colon {
-                self.next_token(); // ':' をスキップ
-                data_type = self.expr()?;
-                data_type = Box::new(Node::new(
-                    NodeValue::DataType(DataType::from(data_type)),
-                    None,
-                    self.current_token().unwrap().line(),
-                    self.current_token().unwrap().column(),
-                ));
-            }
             let arg_name = match arg.value() {
                 NodeValue::Variable(_, ref name, _, _) => name.clone(),
                 _ => return Err("Invalid argument name".to_string()),
@@ -736,11 +727,14 @@ impl<'a> Parser<'a> {
             if self.current_token().unwrap().token_type() == TokenType::Conma {
                 self.next_token(); // ',' をスキップ
             }
+
+            info!("{:?}", self.current_token());
         }
         self.next_token(); // ')' をスキップ
         if self.current_token().unwrap().token_type() == TokenType::RightArrow {
             return_type = self.parse_return_type()?;
         }
+
         let body = self.parse_block()?; // ブロックの解析
 
         Ok(Box::new(Node::new(
@@ -1037,10 +1031,10 @@ impl<'a> Parser<'a> {
     fn parse_data_type(&mut self) -> R<Box<Node>, String> {
         if self.peek_next_token(1).unwrap().token_type() != TokenType::Eof
             && self.peek_next_token(1).unwrap().token_type() != TokenType::Conma
+            && self.peek_next_token(1).unwrap().token_type() != TokenType::RightCurlyBrace
         {
             self.next_token(); // 変数名 をスキップ
         }
-        info!("current: {:?}", self.current_token().unwrap());
         let data_type = self.expr()?;
         Ok(Box::new(Node::new(
             NodeValue::DataType(DataType::from(data_type)),
