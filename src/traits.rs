@@ -921,16 +921,11 @@ impl From<f64> for SystemValue {
     }
 }
 
-
 impl From<bool> for SystemValue {
     fn from(value: bool) -> Self {
         SystemValue::Bool(value)
     }
 }
-
-
-
-
 
 // 1要素のタプル
 impl<T1: Into<SystemValue>> From<(T1,)> for SystemValue {

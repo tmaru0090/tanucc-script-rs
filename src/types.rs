@@ -122,6 +122,7 @@ pub enum DataType {
     String(String), // 文字列型(String)
     Bool(bool),     // ブーリアン値(bool)
     Unit(()),       // Unit値(())
+    Generic(String,Vec<String>),  // ジェネリック型(ジェネリック名,パラメータリスト)
 }
 
 // 定義

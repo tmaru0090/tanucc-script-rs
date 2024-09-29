@@ -64,4 +64,6 @@ loop{
   ret = @show_msg_box("okaycancel","","","information");
 }*/
 //@play_music("C:/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3");
-
+//@cmd("mpv",[":/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3"]);
+type a = array<i32>;
+//let a:test<i32,string,bool> = 0;

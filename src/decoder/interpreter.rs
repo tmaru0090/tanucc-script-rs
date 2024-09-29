@@ -154,31 +154,229 @@ fn show_messagebox(
     response
 }
 
-#[derive(Debug, Clone, Property)]
-pub struct TypeChecker {}
+#[derive(Debug, Clone)]
+pub struct TypeChecker;
 impl TypeChecker {
-    pub fn new() -> Self {
-        TypeChecker {}
+    // Type inference: infers the type based on NodeValue
+    pub fn infer_type(value: &NodeValue) -> R<String, String> {
+        match value {
+            // Integer types
+            NodeValue::DataType(DataType::Int(val)) => {
+                if *val <= i8::MAX as i64 && *val >= i8::MIN as i64 {
+                    Ok("i8".to_string())
+                } else if *val <= i16::MAX as i64 && *val >= i16::MIN as i64 {
+                    Ok("i16".to_string())
+                } else if *val <= i32::MAX as i64 && *val >= i32::MIN as i64 {
+                    Ok("i32".to_string())
+                } else if *val <= i64::MAX && *val >= i64::MIN {
+                    Ok("i64".to_string())
+                } else if *val >= 0 && *val <= u8::MAX as i64 {
+                    Ok("u8".to_string())
+                } else if *val >= 0 && *val <= u16::MAX as i64 {
+                    Ok("u16".to_string())
+                } else if *val >= 0 && *val <= u32::MAX as i64 {
+                    Ok("u32".to_string())
+                } else if *val >= 0 && *val <= u64::MAX as i64 {
+                    Ok("u64".to_string())
+                } else {
+                    Err("Integer value out of bounds for known types".to_string())
+                }
+            }
+
+            // Float types
+            NodeValue::DataType(DataType::Float(val)) => {
+                if *val <= f32::MAX as f64 && *val >= f32::MIN as f64 {
+                    Ok("f32".to_string())
+                } else if *val <= f64::MAX && *val >= f64::MIN {
+                    Ok("f64".to_string())
+                } else {
+                    Err("Float value out of bounds for known types".to_string())
+                }
+            }
+
+            // String type
+            NodeValue::DataType(DataType::String(_)) => Ok("String".to_string()),
+
+            // Boolean type
+            NodeValue::DataType(DataType::Bool(_)) => Ok("bool".to_string()),
+
+            // Operator type
+            NodeValue::Operator(_) => Ok("operator".to_string()),
+
+            // Control flow type
+            NodeValue::ControlFlow(_) => Ok("control_flow".to_string()),
+
+            // Unknown or unsupported type
+            _ => Err("Unable to infer type".to_string()),
+        }
     }
 
-    pub fn infer_type(&self, value: &NodeValue) -> R<String, String> {
-        Ok("i32".to_string())
+    // 値の型変換
+    pub fn convert_to_value(value: &NodeValue) -> R<SystemValue, String> {
+        match value {
+            // 整数型
+            NodeValue::DataType(DataType::Int(val)) => {
+                if *val <= i8::MAX as i64 && *val >= i8::MIN as i64 {
+                    Ok(SystemValue::I8(*val as i8))
+                } else if *val <= i16::MAX as i64 && *val >= i16::MIN as i64 {
+                    Ok(SystemValue::I16(*val as i16))
+                } else if *val <= i32::MAX as i64 && *val >= i32::MIN as i64 {
+                    Ok(SystemValue::I32(*val as i32))
+                } else if *val <= i64::MAX && *val >= i64::MIN {
+                    Ok(SystemValue::I64(*val))
+                } else if *val >= 0 && *val <= u8::MAX as i64 {
+                    Ok(SystemValue::U8(*val as u8))
+                } else if *val >= 0 && *val <= u16::MAX as i64 {
+                    Ok(SystemValue::U16(*val as u16))
+                } else if *val >= 0 && *val <= u32::MAX as i64 {
+                    Ok(SystemValue::U32(*val as u32))
+                } else if *val >= 0 && *val <= u64::MAX as i64 {
+                    Ok(SystemValue::U64(*val as u64))
+                } else {
+                    Err("Integer value out of bounds for known types".to_string())
+                }
+            }
+
+            // 浮動小数点型
+            NodeValue::DataType(DataType::Float(val)) => {
+                if *val <= f32::MAX as f64 && *val >= f32::MIN as f64 {
+                    Ok(SystemValue::F32(*val as f32))
+                } else if *val <= f64::MAX && *val >= f64::MIN {
+                    Ok(SystemValue::F64(*val))
+                } else {
+                    Err("Float value out of bounds for known types".to_string())
+                }
+            }
+
+            // 文字列型
+            NodeValue::DataType(DataType::String(s)) => Ok(SystemValue::String(s.clone())),
+
+            // ブール型
+            NodeValue::DataType(DataType::Bool(b)) => Ok(SystemValue::Bool(*b)),
+
+            // 未対応の型
+            _ => Err("Unsupported NodeValue type for conversion".to_string()),
+        }
     }
-    pub fn compare_types(&self, type_a: &String, type_b: &String) -> R<bool, String> {
-        Ok(type_a == type_b)
-    }
-    // 型変換
-    pub fn convert_to_value(
-        &mut self,
-        type_name: &String,
-        value: &NodeValue,
-    ) -> R<SystemValue, String> {
-        Ok(SystemValue::I32(0))
+    // Type conversion: converts NodeValue into a SystemValue based on the expected type
+    pub fn convert_type_to_value(type_name: &String, value: &NodeValue) -> R<SystemValue, String> {
+        match type_name.as_str() {
+            "i64" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::I64(*val))
+                } else {
+                    Err(format!("Failed to convert to type i64: {:?}", value))
+                }
+            }
+            "f64" => {
+                if let NodeValue::DataType(DataType::Float(val)) = value {
+                    Ok(SystemValue::F64(*val))
+                } else {
+                    Err(format!("Failed to convert to type f64: {:?}", value))
+                }
+            }
+            "string" => {
+                if let NodeValue::DataType(DataType::String(val)) = value {
+                    Ok(SystemValue::String(val.clone()))
+                } else {
+                    Err(format!("Failed to convert to type String: {:?}", value))
+                }
+            }
+            "bool" => {
+                if let NodeValue::DataType(DataType::Bool(val)) = value {
+                    Ok(SystemValue::Bool(*val))
+                } else {
+                    Err(format!("Failed to convert to type bool: {:?}", value))
+                }
+            }
+            "usize" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::Usize(*val as usize))
+                } else {
+                    Err(format!("Failed to convert to type usize: {:?}", value))
+                }
+            }
+            "u8" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::U8(*val as u8))
+                } else {
+                    Err(format!("Failed to convert to type u8: {:?}", value))
+                }
+            }
+            "u16" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::U16(*val as u16))
+                } else {
+                    Err(format!("Failed to convert to type u16: {:?}", value))
+                }
+            }
+            "u32" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::U32(*val as u32))
+                } else {
+                    Err(format!("Failed to convert to type u32: {:?}", value))
+                }
+            }
+            "u64" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::U64(*val as u64))
+                } else {
+                    Err(format!("Failed to convert to type u64: {:?}", value))
+                }
+            }
+            "i8" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::I8(*val as i8))
+                } else {
+                    Err(format!("Failed to convert to type i8: {:?}", value))
+                }
+            }
+            "i16" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::I16(*val as i16))
+                } else {
+                    Err(format!("Failed to convert to type i16: {:?}", value))
+                }
+            }
+            "i32" => {
+                if let NodeValue::DataType(DataType::Int(val)) = value {
+                    Ok(SystemValue::I32(*val as i32))
+                } else {
+                    Err(format!("Failed to convert to type i32: {:?}", value))
+                }
+            }
+            "f32" => {
+                if let NodeValue::DataType(DataType::Float(val)) = value {
+                    Ok(SystemValue::F32(*val as f32))
+                } else {
+                    Err(format!("Failed to convert to type f32: {:?}", value))
+                }
+            }
+            _ => Err(format!("Unknown type conversion request: {}", type_name)),
+        }
     }
 
-    // 値代入チェック
-    pub fn check_assign_type(&mut self, type_name: &String, value: &SystemValue) -> R<(), String> {
-        Ok(())
+    // Assignment type check: checks if the type of a given value matches the expected type
+    pub fn check_assign_type(type_name: &String, value: &SystemValue) -> R<(), String> {
+        match (type_name.as_str(), value) {
+            ("i64", SystemValue::I64(_)) => Ok(()),
+            ("f64", SystemValue::F64(_)) => Ok(()),
+            ("string", SystemValue::String(_)) => Ok(()),
+            ("bool", SystemValue::Bool(_)) => Ok(()),
+            ("usize", SystemValue::Usize(_)) => Ok(()),
+            ("u8", SystemValue::U8(_)) => Ok(()),
+            ("u16", SystemValue::U16(_)) => Ok(()),
+            ("u32", SystemValue::U32(_)) => Ok(()),
+            ("u64", SystemValue::U64(_)) => Ok(()),
+            ("i8", SystemValue::I8(_)) => Ok(()),
+            ("i16", SystemValue::I16(_)) => Ok(()),
+            ("i32", SystemValue::I32(_)) => Ok(()),
+            ("f32", SystemValue::F32(_)) => Ok(()),
+            _ => Err(format!(
+                "Type mismatch: expected {}, found {:?}",
+                type_name, value
+            )),
+        }
     }
 }
 
@@ -197,7 +395,6 @@ pub struct Decoder {
     file_contents: IndexMap<String, String>, // ファイルの内容(ファイル名,ファイルの内容)
     #[property(get)]
     current_node: Option<(String, Box<Node>)>, // 現在のノード(ファイル名,現在のNode)
-
     #[property(get)]
     generated_ast_file: bool, // ASTの生成をするかどうか
 
@@ -658,7 +855,20 @@ impl Decoder {
         if let Some(mut variable) = variable_data {
             if variable.is_mutable {
                 let new_value = self.execute_node(&value)?;
-                //self.check_type(&new_value, variable.data_type.as_str().unwrap_or(""))?;
+                if let Err(e) = TypeChecker::check_assign_type(&variable.data_name, &new_value) {
+                    return Err(compile_error!(
+                        "error",
+                        self.current_node.clone().unwrap().1.line,
+                        self.current_node.clone().unwrap().1.column,
+                        &self.current_node.clone().unwrap().0,
+                        &self
+                            .file_contents
+                            .get(&self.current_node.clone().unwrap().0)
+                            .unwrap(),
+                        "{}",
+                        e
+                    ));
+                }
 
                 match &mut variable.value {
                     SystemValue::Array(ref mut array) => {
@@ -806,6 +1016,7 @@ impl Decoder {
                 format!("@{}", func_name.clone()),
                 Variable {
                     value: func_info.clone(),
+                    data_name: String::from(""),
                     address: func_info_index,
                     is_mutable: false,
                     size: func_info.size(),
@@ -817,6 +1028,7 @@ impl Decoder {
             func_name.clone(),
             Variable {
                 value: func_info.clone(),
+                data_name: String::from(""),
                 address: func_info_index,
                 is_mutable: false,
                 size: 0,
@@ -909,7 +1121,7 @@ impl Decoder {
                             return Err("to_str expects exactly one argument".into());
                         }
                         let n = match self.execute_node(&args[0])? {
-                            SystemValue::I32(v) => v,
+                            SystemValue::I64(v) => v,
                             _ => return Err("to_str expects a string as the file name".into()),
                         };
                         let string = n.to_string();
@@ -1144,12 +1356,15 @@ impl Decoder {
                                 match &evaluated_args[1] {
                                     SystemValue::Array(v) => v
                                         .iter()
-                                        .filter_map(|item| {
-                                            if let SystemValue::String(s) = item.clone() {
-                                                Some(s.clone())
-                                            } else {
-                                                None
+                                        .filter_map(|item| match item {
+                                            SystemValue::Pointer(v) => {
+                                                if let SystemValue::String(s) = *v.clone() {
+                                                    Some(s.clone())
+                                                } else {
+                                                    None
+                                                }
                                             }
+                                            _ => None,
                                         })
                                         .collect(),
                                     _ => return Err(
@@ -1326,7 +1541,52 @@ impl Decoder {
             _ => String::new(),
         }
         .into();
-        let v_value;
+        let mut v_type_string = String::new();
+        let mut v_value: SystemValue = SystemValue::Null;
+        if let SystemValue::String(ref v) = v_type.clone() {
+            if v.is_empty() {
+                // 型を推論
+                let type_name = match TypeChecker::infer_type(&value.clone().value()) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        return Err(compile_error!(
+                            "error",
+                            self.current_node.clone().unwrap().1.line(),
+                            self.current_node.clone().unwrap().1.column(),
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "{}",
+                            e
+                        ));
+                    }
+                };
+
+                v_type = type_name.into();
+            } else {
+                // 型チェック
+                v_value = match TypeChecker::convert_type_to_value(v, &value.clone().value()) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        return Err(compile_error!(
+                            "error",
+                            self.current_node.clone().unwrap().1.line(),
+                            self.current_node.clone().unwrap().1.column(),
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "{}",
+                            e
+                        ));
+                    }
+                };
+            }
+            v_type_string = v.clone();
+        }
         let address;
 
         {
@@ -1351,11 +1611,6 @@ impl Decoder {
                     name
                 ));
             }
-            v_value = {
-                let _value = self.execute_node(&value)?;
-                //            self.check_type(&_value, v_type.as_str().unwrap_or(""))?
-                _value.clone()
-            };
         }
 
         if value_is_reference {
@@ -1403,6 +1658,7 @@ impl Decoder {
                 name.clone(),
                 Variable {
                     value: v_value.clone(),
+                    data_name: v_type_string.clone(),
                     address,
                     is_mutable: *is_mutable,
                     size: v_value.size(),
@@ -1420,6 +1676,7 @@ impl Decoder {
                 name.clone(),
                 Variable {
                     value: v_value.clone(),
+                    data_name: v_type_string.clone(),
                     address,
                     is_mutable: *is_mutable,
                     size: v_value.size(),
@@ -1591,42 +1848,65 @@ impl Decoder {
         {
             let left_value = self.execute_node(left)?;
             let right_value = self.execute_node(right)?;
+
             match (&node.value, left_value.clone(), right_value.clone()) {
                 (
                     NodeValue::Operator(Operator::BitAnd(_, _)),
-                    SystemValue::I64(l),
-                    SystemValue::I64(r),
+                    SystemValue::I64(_),
+                    SystemValue::I64(_),
                 ) => Ok((left_value & right_value)?),
                 (
                     NodeValue::Operator(Operator::BitOr(_, _)),
-                    SystemValue::I64(l),
-                    SystemValue::I64(r),
+                    SystemValue::I64(_),
+                    SystemValue::I64(_),
                 ) => Ok((left_value | right_value)?),
-
                 (
                     NodeValue::Operator(Operator::BitXor(_, _)),
-                    SystemValue::I64(l),
-                    SystemValue::I64(r),
+                    SystemValue::I64(_),
+                    SystemValue::I64(_),
                 ) => Ok((left_value ^ right_value)?),
-
                 (
                     NodeValue::Operator(Operator::ShiftLeft(_, _)),
-                    SystemValue::I64(l),
-                    SystemValue::I64(r),
+                    SystemValue::I64(_),
+                    SystemValue::I64(_),
                 ) => Ok((left_value << right_value)?),
-
                 (
                     NodeValue::Operator(Operator::ShiftRight(_, _)),
-                    SystemValue::I64(l),
-                    SystemValue::I64(r),
+                    SystemValue::I64(_),
+                    SystemValue::I64(_),
                 ) => Ok((left_value >> right_value)?),
-
-                _ => Err("Unsupported operation or mismatched types in condition".to_string()),
+                _ => {
+                    return Err(compile_error!(
+                    "error",
+                    node.line,
+                    node.column,
+                    &self.current_node.clone().unwrap().0,
+                    &self
+                        .file_contents
+                        .get(&self.current_node.clone().unwrap().0)
+                        .unwrap(),
+                    "Unsupported operation or mismatched types in binary bit operation: {:?} {:?}",
+                    left_value,
+                    right_value
+                ));
+                }
             }
         } else {
-            Err("Unsupported node value".to_string())
+            Err(compile_error!(
+                "error",
+                node.line,
+                node.column,
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Unsupported node value: {:?}",
+                node.value.clone(),
+            ))
         }
     }
+
     fn eval_binary_condition(&mut self, node: &Node) -> Result<SystemValue, String> {
         if let NodeValue::Operator(Operator::Eq(left, right))
         | NodeValue::Operator(Operator::Ne(left, right))
@@ -1637,6 +1917,7 @@ impl Decoder {
         {
             let left_value = self.execute_node(left)?;
             let right_value = self.execute_node(right)?;
+
             match (&node.value, left_value.clone(), right_value.clone()) {
                 (
                     NodeValue::Operator(Operator::Eq(_, _)),
@@ -1678,13 +1959,37 @@ impl Decoder {
                     SystemValue::I64(l),
                     SystemValue::I64(r),
                 ) => Ok(SystemValue::Bool(l >= r)),
-                _ => Err("Unsupported operation or mismatched types in condition".to_string()),
+                _ => {
+                    return Err(compile_error!(
+                        "error",
+                        node.line,
+                        node.column,
+                        &self.current_node.clone().unwrap().0,
+                        &self
+                            .file_contents
+                            .get(&self.current_node.clone().unwrap().0)
+                            .unwrap(),
+                        "Unsupported operation or mismatched types in condition: {:?} {:?}",
+                        left_value,
+                        right_value
+                    ));
+                }
             }
         } else {
-            Err("Unsupported node value".to_string())
+            Err(compile_error!(
+                "error",
+                node.line,
+                node.column,
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Unsupported node value: {:?}",
+                node.value.clone(),
+            ))
         }
     }
-
     fn eval_binary_op(&mut self, node: &Node) -> Result<SystemValue, String> {
         if let NodeValue::Operator(Operator::Add(lhs, rhs))
         | NodeValue::Operator(Operator::Sub(lhs, rhs))
@@ -1703,43 +2008,147 @@ impl Decoder {
                     (SystemValue::I32(l), SystemValue::I32(r)) => Ok(SystemValue::I32(l + r)),
                     (SystemValue::F64(l), SystemValue::F64(r)) => Ok(SystemValue::F64(l + r)),
                     (SystemValue::String(l), SystemValue::String(r)) => {
-                        Ok(SystemValue::String(l.clone() + &r))
+                        Ok(SystemValue::String(l + &r))
                     }
-                    _ => Err("Unsupported types for addition".to_string()),
+                    _ => {
+                        return Err(compile_error!(
+                            "error",
+                            node.line,
+                            node.column,
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "Unsupported types for addition: {:?} {:?}",
+                            left_value,
+                            right_value
+                        ));
+                    }
                 },
                 (NodeValue::Operator(Operator::Sub(_, _)), left, right) => match (left, right) {
                     (SystemValue::I32(l), SystemValue::I32(r)) => Ok(SystemValue::I32(l - r)),
                     (SystemValue::F64(l), SystemValue::F64(r)) => Ok(SystemValue::F64(l - r)),
-                    _ => Err("Unsupported types for subtraction".to_string()),
+                    _ => {
+                        return Err(compile_error!(
+                            "error",
+                            node.line,
+                            node.column,
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "Unsupported types for subtraction: {:?} {:?}",
+                            left_value,
+                            right_value
+                        ));
+                    }
                 },
                 (NodeValue::Operator(Operator::Mul(_, _)), left, right) => match (left, right) {
                     (SystemValue::I32(l), SystemValue::I32(r)) => Ok(SystemValue::I32(l * r)),
                     (SystemValue::F64(l), SystemValue::F64(r)) => Ok(SystemValue::F64(l * r)),
-                    _ => Err("Unsupported types for multiplication".to_string()),
+                    _ => {
+                        return Err(compile_error!(
+                            "error",
+                            node.line,
+                            node.column,
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "Unsupported types for multiplication: {:?} {:?}",
+                            left_value,
+                            right_value
+                        ));
+                    }
                 },
                 (NodeValue::Operator(Operator::Div(_, _)), left, right) => match (left, right) {
                     (SystemValue::I32(l), SystemValue::I32(r)) => {
                         if r == 0 {
-                            return Err("Division by zero".to_string());
+                            return Err(compile_error!(
+                                "error",
+                                node.line,
+                                node.column,
+                                &self.current_node.clone().unwrap().0,
+                                &self
+                                    .file_contents
+                                    .get(&self.current_node.clone().unwrap().0)
+                                    .unwrap(),
+                                "Division by zero: {:?} {:?}",
+                                left_value,
+                                right_value
+                            ));
                         }
                         Ok(SystemValue::I32(l / r))
                     }
                     (SystemValue::F64(l), SystemValue::F64(r)) => {
                         if r == 0.0 {
-                            return Err("Division by zero".to_string());
+                            return Err(compile_error!(
+                                "error",
+                                node.line,
+                                node.column,
+                                &self.current_node.clone().unwrap().0,
+                                &self
+                                    .file_contents
+                                    .get(&self.current_node.clone().unwrap().0)
+                                    .unwrap(),
+                                "Division by zero : {:?} {:?}",
+                                left_value,
+                                right_value
+                            ));
                         }
                         Ok(SystemValue::F64(l / r))
                     }
-                    _ => Err("Unsupported types for division".to_string()),
+                    _ => {
+                        return Err(compile_error!(
+                            "error",
+                            node.line,
+                            node.column,
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "Unsupported types for division: {:?} {:?}",
+                            left_value,
+                            right_value
+                        ));
+                    }
                 },
                 _ => {
-                    Err("Unsupported operation or mismatched types in binary operation".to_string())
+                    return Err(compile_error!(
+                        "error",
+                        node.line,
+                        node.column,
+                        &self.current_node.clone().unwrap().0,
+                        &self
+                            .file_contents
+                            .get(&self.current_node.clone().unwrap().0)
+                            .unwrap(),
+                        "Unsupported operation or mismatched types in binary operation: {:?} {:?}",
+                        left_value,
+                        right_value
+                    ));
                 }
             }
         } else {
-            Err("Unsupported node value".to_string())
+            Err(compile_error!(
+                "error",
+                node.line,
+                node.column,
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Unsupported node value: {:?}",
+                node.value.clone(),
+            ))
         }
     }
+
     fn eval_if_statement(
         &mut self,
         condition: &Box<Node>,
@@ -1823,6 +2232,7 @@ impl Decoder {
                 let element_address = self.memory_mgr.allocate(element.clone());
                 let variable = Variable {
                     value: element.clone(),
+                    data_name: String::from(""),
                     address: element_address,
                     is_mutable: true, // 仮に可変とする
                     size: element.size(),
@@ -1864,18 +2274,25 @@ impl Decoder {
         Ok(result)
     }
 
-    fn eval_primitive_type(&mut self, node: &Node) -> Result<SystemValue, String> {
-        match &node.value {
-            NodeValue::DataType(DataType::Int(number)) => Ok(SystemValue::I64(*number)),
-            NodeValue::DataType(DataType::Float(number)) => Ok(SystemValue::F64(*number)),
-            NodeValue::DataType(DataType::String(s)) => Ok(SystemValue::String(s.clone())),
-            NodeValue::DataType(DataType::Bool(b)) => Ok(SystemValue::Bool(*b)),
-            NodeValue::Declaration(Declaration::Array(data_type, values)) => {
-                self.eval_array(&data_type, &values)
+    pub fn eval_primitive_type(&mut self, node: &Node) -> Result<SystemValue, String> {
+        let value = &node.value;
+
+        // 型を推論
+        let inferred_type_result = TypeChecker::infer_type(value);
+
+        match inferred_type_result {
+            Ok(type_name) => {
+                // 型に基づいて値を変換
+                let conversion_result = TypeChecker::convert_type_to_value(&type_name, value);
+                match conversion_result {
+                    Ok(system_value) => Ok(system_value),
+                    Err(err) => Err(format!("Type conversion error: {}", err)),
+                }
             }
-            _ => Ok(SystemValue::Null),
+            Err(err) => Err(format!("Type inference error: {}", err)),
         }
     }
+
     /*
         pub fn eval_impl_statement(
             &mut self,
@@ -2076,16 +2493,44 @@ impl Decoder {
             NodeValue::Operator(Operator::Range(start, max)) => {
                 let _start_value = self.execute_node(start)?;
                 let _max_value = self.execute_node(max)?;
+
                 // start_value と max_value の値を取り出す
                 let start_value = match _start_value {
                     SystemValue::U64(val) => val,
-                    _ => return Err("Invalid type for start_value".to_string()),
+                    _ => {
+                        return Err(compile_error!(
+                            "error",
+                            node.line,
+                            node.column,
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "Invalid type for start_value: expected U64, got {:?}",
+                            _start_value
+                        ));
+                    }
                 };
 
                 let max_value = match _max_value {
                     SystemValue::U64(val) => val,
-                    _ => return Err("Invalid type for max_value".to_string()),
+                    _ => {
+                        return Err(compile_error!(
+                            "error",
+                            node.line,
+                            node.column,
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "Invalid type for max_value: expected U64, got {:?}",
+                            _max_value
+                        ));
+                    }
                 };
+
                 let array: Vec<u64> = (start_value..=max_value).collect();
                 result = SystemValue::from(array);
             }

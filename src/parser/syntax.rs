@@ -394,6 +394,7 @@ impl<'a> Parser<'a> {
         let mut is_reference = false;
         let mut is_mutable = false;
         let mut is_dereference = false;
+        let mut generic_type_name = Vec::new();
         if token.token_type() == TokenType::AtSign {
             self.next_token();
             token = self.current_token().unwrap().clone();
@@ -491,6 +492,21 @@ impl<'a> Parser<'a> {
                     node = *self.parse_scope_resolution()?;
                 } else {
                     self.next_token();
+
+                    if self.current_token().unwrap().token_type() == TokenType::Lt {
+                        self.next_token();
+                        while self.current_token().unwrap().token_type() != TokenType::Gt {
+                            generic_type_name.push(self.current_token().unwrap().token_value());
+                            self.next_token();
+                            if self.current_token().unwrap().token_type() == TokenType::Conma {
+                                self.next_token(); // ',' をスキップ
+                            }
+                        }
+
+                        //panic!("{:?}", generic_type_name);
+                        self.next_token();
+                        //panic!("{:?}",self.current_token());
+                    }
                     if self.current_token().unwrap().token_type() == TokenType::LeftParen {
                         node = *self.parse_function_call(token, is_system)?;
                     } else {
@@ -1035,6 +1051,7 @@ impl<'a> Parser<'a> {
         {
             self.next_token(); // 変数名 をスキップ
         }
+
         let data_type = self.expr()?;
         Ok(Box::new(Node::new(
             NodeValue::DataType(DataType::from(data_type)),
@@ -1045,10 +1062,11 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_type_declaration(&mut self) -> R<Box<Node>, String> {
-        self.next_token();
+        self.next_token(); // type
         let _type_name = self.current_token().unwrap().token_value().clone();
-        self.next_token();
-        self.next_token();
+        self.next_token(); // name 
+        self.next_token(); // =
+        
         let value_node = self.expr()?;
         Ok(Box::new(Node {
             value: NodeValue::Declaration(Declaration::Type(

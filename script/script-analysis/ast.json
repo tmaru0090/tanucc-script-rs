@@ -115,8 +115,93 @@
                 ]
               ]
             },
-            "next": null,
-            "line": 66,
+            "next": {
+              "value": {
+                "SingleComment": [
+                  "@cmd(\"mpv\",[\":/Users/tanukimaru/Downloads/sounds/maou_bgm_healing15.mp3\"]);",
+                  [
+                    67,
+                    1
+                  ]
+                ]
+              },
+              "next": {
+                "value": {
+                  "Declaration": {
+                    "Type": [
+                      {
+                        "value": {
+                          "Variable": [
+                            {
+                              "value": "Null",
+                              "next": null,
+                              "line": 68,
+                              "column": 20,
+                              "is_statement": false
+                            },
+                            "a",
+                            false,
+                            false
+                          ]
+                        },
+                        "next": null,
+                        "line": 68,
+                        "column": 20,
+                        "is_statement": false
+                      },
+                      {
+                        "value": {
+                          "Variable": [
+                            {
+                              "value": "Null",
+                              "next": null,
+                              "line": 68,
+                              "column": 20,
+                              "is_statement": false
+                            },
+                            "array",
+                            false,
+                            false
+                          ]
+                        },
+                        "next": null,
+                        "line": 68,
+                        "column": 20,
+                        "is_statement": false
+                      }
+                    ]
+                  }
+                },
+                "next": {
+                  "value": "EndStatement",
+                  "next": {
+                    "value": {
+                      "SingleComment": [
+                        "let a:test<i32,string,bool> = 0;",
+                        [
+                          69,
+                          1
+                        ]
+                      ]
+                    },
+                    "next": null,
+                    "line": 69,
+                    "column": 1,
+                    "is_statement": false
+                  },
+                  "line": 69,
+                  "column": 1,
+                  "is_statement": false
+                },
+                "line": 68,
+                "column": 20,
+                "is_statement": false
+              },
+              "line": 68,
+              "column": 1,
+              "is_statement": false
+            },
+            "line": 67,
             "column": 1,
             "is_statement": false
           },

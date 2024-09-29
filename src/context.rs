@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone)]
 pub struct Variable {
     pub value: SystemValue, // 値
+    pub data_name: String,  // 型名
     pub address: Uuid,      // アドレス
     pub is_mutable: bool,   // 可変性
     pub size: usize,        // サイズ
