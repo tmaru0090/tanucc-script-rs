@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Comments</title>
+<style>
+body { font-family: Arial, sans-serif; }
+.comment-container { margin: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+.comment { margin-bottom: 5px; padding: 5px; background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 4px; }
+.comment-link { color: #007bff; text-decoration: none; }
+.comment-link:hover { text-decoration: underline; }
+.hidden { display: none; }
+.slide { overflow: hidden; transition: max-height 0.3s ease-out; }
+.slide.show { max-height: 500px; }
+.slide.hide { max-height: 0; }
+#search-box { margin: 20px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; width: 300px; }
+.highlight { background-color: #e3f2fd; border: 1px solid #039be5; border-radius: 2px; }
+.dark-mode { background-color: #333; color: #ddd; }
+.dark-mode .comment { background-color: #444; border: 1px solid #555; }
+.dark-mode .comment-link { color: #82b1ff; }
+.pagination { margin: 20px; }
+.pagination a { margin: 0 5px; text-decoration: none; color: #007bff; }
+.pagination a.active { font-weight: bold; }
+</style>
+</head>
+<body>
+<button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+<div id="search-container">
+<input type="text" id="search-box" placeholder="Search comments..."></input>
+</div>
+<div id="comments">
+<div class="comment-container">
+<a href="#" class="comment-link" onclick="toggleComments(1,1)">Line 1 Column 1</a>
+<div id="comments-01-01" class="slide hide"><div class="comment" data-comment="@include "example/test.sc"">@include "example/test.sc"</div>
+</div>
+</div>
+<div class="comment-container">
+<a href="#" class="comment-link" onclick="toggleComments(10,5)">Line 10 Column 5</a>
+<div id="comments-10-05" class="slide hide"><div class="comment" data-comment=" 登録済みシステム関数情報を読み込み"> 登録済みシステム関数情報を読み込み</div>
+</div>
+</div>
+<div class="comment-container">
+<a href="#" class="comment-link" onclick="toggleComments(11,5)">Line 11 Column 5</a>
+<div id="comments-11-05" class="slide hide"><div class="comment" data-comment="let read_system_func = @read_file("./test-dir/test.txt");">let read_system_func = @read_file("./test-dir/test.txt");</div>
+</div>
+</div>
+<div class="comment-container">
+<a href="#" class="comment-link" onclick="toggleComments(13,5)">Line 13 Column 5</a>
+<div id="comments-13-05" class="slide hide"><div class="comment" data-comment="let out =@cmd("mpv",["C:/Users/tanukimaru/Downloads/sounds/*"]);">let out =@cmd("mpv",["C:/Users/tanukimaru/Downloads/sounds/*"]);</div>
+</div>
+</div>
+<div class="pagination">
+<a href="#" class="active">1</a>
+<a href="#">2</a>
+<a href="#">3</a>
+<!-- Add more pages as needed -->
+</div>
+<script>
+function toggleComments(line, column) {
+var commentsDiv = document.getElementById('comments-' + String(line).padStart(2, '0') + '-' + String(column).padStart(2, '0'));
+if (commentsDiv.classList.contains('hide')) {
+commentsDiv.classList.remove('hide');
+commentsDiv.classList.add('show');
+} else {
+commentsDiv.classList.remove('show');
+commentsDiv.classList.add('hide');
+}
+}
+document.getElementById('search-box').addEventListener('input', function() {
+var searchValue = this.value.toLowerCase();
+var comments = document.querySelectorAll('.comment');
+comments.forEach(function(comment) {
+var commentText = comment.textContent.toLowerCase();
+var highlightedText = commentText;
+if (searchValue && commentText.includes(searchValue)) {
+var regex = new RegExp('(' + searchValue + ')', 'gi');
+highlightedText = commentText.replace(regex, '<span class="highlight">$1</span>');
+comment.innerHTML = highlightedText;
+} else {
+comment.innerHTML = commentText;
+}
+comment.style.display = commentText.includes(searchValue) ? '' : 'none';
+});
+});
+function toggleDarkMode() {
+document.body.classList.toggle('dark-mode');
+}
+</script>
+</body>
+</html>

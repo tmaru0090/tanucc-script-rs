@@ -1,0 +1,660 @@
+{
+  "example/main.sc": {
+    "value": {
+      "SingleComment": [
+        "@include \"example/test.sc\"",
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    "next": {
+      "value": {
+        "Block": [
+          {
+            "value": {
+              "Declaration": {
+                "Variable": [
+                  {
+                    "value": {
+                      "Variable": [
+                        {
+                          "value": "Null",
+                          "next": null,
+                          "line": 3,
+                          "column": 23,
+                          "is_statement": false
+                        },
+                        "file",
+                        false,
+                        false,
+                        null
+                      ]
+                    },
+                    "next": null,
+                    "line": 3,
+                    "column": 23,
+                    "is_statement": false
+                  },
+                  {
+                    "value": {
+                      "DataType": {
+                        "Unit": null
+                      }
+                    },
+                    "next": null,
+                    "line": 3,
+                    "column": 9,
+                    "is_statement": false
+                  },
+                  {
+                    "value": {
+                      "Call": [
+                        "file",
+                        [],
+                        true
+                      ]
+                    },
+                    "next": null,
+                    "line": 3,
+                    "column": 23,
+                    "is_statement": true
+                  },
+                  true,
+                  false
+                ]
+              }
+            },
+            "next": {
+              "value": "EndStatement",
+              "next": {
+                "value": {
+                  "Declaration": {
+                    "Variable": [
+                      {
+                        "value": {
+                          "Variable": [
+                            {
+                              "value": "Null",
+                              "next": null,
+                              "line": 4,
+                              "column": 23,
+                              "is_statement": false
+                            },
+                            "line",
+                            false,
+                            false,
+                            null
+                          ]
+                        },
+                        "next": null,
+                        "line": 4,
+                        "column": 23,
+                        "is_statement": false
+                      },
+                      {
+                        "value": {
+                          "DataType": {
+                            "Unit": null
+                          }
+                        },
+                        "next": null,
+                        "line": 4,
+                        "column": 9,
+                        "is_statement": false
+                      },
+                      {
+                        "value": {
+                          "Call": [
+                            "line",
+                            [],
+                            true
+                          ]
+                        },
+                        "next": null,
+                        "line": 4,
+                        "column": 23,
+                        "is_statement": true
+                      },
+                      true,
+                      false
+                    ]
+                  }
+                },
+                "next": {
+                  "value": "EndStatement",
+                  "next": {
+                    "value": {
+                      "Declaration": {
+                        "Variable": [
+                          {
+                            "value": {
+                              "Variable": [
+                                {
+                                  "value": "Null",
+                                  "next": null,
+                                  "line": 5,
+                                  "column": 27,
+                                  "is_statement": false
+                                },
+                                "column",
+                                false,
+                                false,
+                                null
+                              ]
+                            },
+                            "next": null,
+                            "line": 5,
+                            "column": 27,
+                            "is_statement": false
+                          },
+                          {
+                            "value": {
+                              "DataType": {
+                                "Unit": null
+                              }
+                            },
+                            "next": null,
+                            "line": 5,
+                            "column": 9,
+                            "is_statement": false
+                          },
+                          {
+                            "value": {
+                              "Call": [
+                                "column",
+                                [],
+                                true
+                              ]
+                            },
+                            "next": null,
+                            "line": 5,
+                            "column": 27,
+                            "is_statement": true
+                          },
+                          true,
+                          false
+                        ]
+                      }
+                    },
+                    "next": {
+                      "value": "EndStatement",
+                      "next": {
+                        "value": {
+                          "Declaration": {
+                            "Variable": [
+                              {
+                                "value": {
+                                  "Variable": [
+                                    {
+                                      "value": "Null",
+                                      "next": null,
+                                      "line": 6,
+                                      "column": 36,
+                                      "is_statement": false
+                                    },
+                                    "system_func",
+                                    false,
+                                    false,
+                                    null
+                                  ]
+                                },
+                                "next": null,
+                                "line": 6,
+                                "column": 36,
+                                "is_statement": false
+                              },
+                              {
+                                "value": {
+                                  "DataType": {
+                                    "Unit": null
+                                  }
+                                },
+                                "next": null,
+                                "line": 6,
+                                "column": 9,
+                                "is_statement": false
+                              },
+                              {
+                                "value": {
+                                  "Call": [
+                                    "func_lists",
+                                    [],
+                                    true
+                                  ]
+                                },
+                                "next": null,
+                                "line": 6,
+                                "column": 36,
+                                "is_statement": true
+                              },
+                              true,
+                              false
+                            ]
+                          }
+                        },
+                        "next": {
+                          "value": "EndStatement",
+                          "next": {
+                            "value": {
+                              "Declaration": {
+                                "Variable": [
+                                  {
+                                    "value": {
+                                      "Variable": [
+                                        {
+                                          "value": "Null",
+                                          "next": null,
+                                          "line": 7,
+                                          "column": 125,
+                                          "is_statement": false
+                                        },
+                                        "content",
+                                        false,
+                                        false,
+                                        null
+                                      ]
+                                    },
+                                    "next": null,
+                                    "line": 7,
+                                    "column": 125,
+                                    "is_statement": false
+                                  },
+                                  {
+                                    "value": {
+                                      "DataType": {
+                                        "Unit": null
+                                      }
+                                    },
+                                    "next": null,
+                                    "line": 7,
+                                    "column": 9,
+                                    "is_statement": false
+                                  },
+                                  {
+                                    "value": {
+                                      "DataType": {
+                                        "Array": [
+                                          {
+                                            "value": "Null",
+                                            "next": null,
+                                            "line": 7,
+                                            "column": 19,
+                                            "is_statement": false
+                                          },
+                                          [
+                                            {
+                                              "value": {
+                                                "DataType": {
+                                                  "String": "-- script info --"
+                                                }
+                                              },
+                                              "next": null,
+                                              "line": 7,
+                                              "column": 39,
+                                              "is_statement": false
+                                            },
+                                            {
+                                              "value": {
+                                                "Operator": {
+                                                  "Add": [
+                                                    {
+                                                      "value": {
+                                                        "DataType": {
+                                                          "String": "file: "
+                                                        }
+                                                      },
+                                                      "next": null,
+                                                      "line": 7,
+                                                      "column": 48,
+                                                      "is_statement": false
+                                                    },
+                                                    {
+                                                      "value": {
+                                                        "MemberAccess": [
+                                                          {
+                                                            "value": {
+                                                              "Variable": [
+                                                                {
+                                                                  "value": "Null",
+                                                                  "next": null,
+                                                                  "line": 0,
+                                                                  "column": 0,
+                                                                  "is_statement": false
+                                                                },
+                                                                "file",
+                                                                false,
+                                                                false,
+                                                                null
+                                                              ]
+                                                            },
+                                                            "next": null,
+                                                            "line": 7,
+                                                            "column": 53,
+                                                            "is_statement": false
+                                                          },
+                                                          {
+                                                            "value": {
+                                                              "Call": [
+                                                                "to_string",
+                                                                [],
+                                                                true
+                                                              ]
+                                                            },
+                                                            "next": null,
+                                                            "line": 7,
+                                                            "column": 66,
+                                                            "is_statement": true
+                                                          }
+                                                        ]
+                                                      },
+                                                      "next": null,
+                                                      "line": 7,
+                                                      "column": 66,
+                                                      "is_statement": false
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              "next": null,
+                                              "line": 7,
+                                              "column": 66,
+                                              "is_statement": false
+                                            },
+                                            {
+                                              "value": {
+                                                "Operator": {
+                                                  "Add": [
+                                                    {
+                                                      "value": {
+                                                        "DataType": {
+                                                          "String": "line: "
+                                                        }
+                                                      },
+                                                      "next": null,
+                                                      "line": 7,
+                                                      "column": 75,
+                                                      "is_statement": false
+                                                    },
+                                                    {
+                                                      "value": {
+                                                        "MemberAccess": [
+                                                          {
+                                                            "value": {
+                                                              "Variable": [
+                                                                {
+                                                                  "value": "Null",
+                                                                  "next": null,
+                                                                  "line": 0,
+                                                                  "column": 0,
+                                                                  "is_statement": false
+                                                                },
+                                                                "line",
+                                                                false,
+                                                                false,
+                                                                null
+                                                              ]
+                                                            },
+                                                            "next": null,
+                                                            "line": 7,
+                                                            "column": 80,
+                                                            "is_statement": false
+                                                          },
+                                                          {
+                                                            "value": {
+                                                              "Call": [
+                                                                "to_string",
+                                                                [],
+                                                                true
+                                                              ]
+                                                            },
+                                                            "next": null,
+                                                            "line": 7,
+                                                            "column": 93,
+                                                            "is_statement": true
+                                                          }
+                                                        ]
+                                                      },
+                                                      "next": null,
+                                                      "line": 7,
+                                                      "column": 93,
+                                                      "is_statement": false
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              "next": null,
+                                              "line": 7,
+                                              "column": 93,
+                                              "is_statement": false
+                                            },
+                                            {
+                                              "value": {
+                                                "Operator": {
+                                                  "Add": [
+                                                    {
+                                                      "value": {
+                                                        "DataType": {
+                                                          "String": "column: "
+                                                        }
+                                                      },
+                                                      "next": null,
+                                                      "line": 7,
+                                                      "column": 104,
+                                                      "is_statement": false
+                                                    },
+                                                    {
+                                                      "value": {
+                                                        "MemberAccess": [
+                                                          {
+                                                            "value": {
+                                                              "Variable": [
+                                                                {
+                                                                  "value": "Null",
+                                                                  "next": null,
+                                                                  "line": 0,
+                                                                  "column": 0,
+                                                                  "is_statement": false
+                                                                },
+                                                                "column",
+                                                                false,
+                                                                false,
+                                                                null
+                                                              ]
+                                                            },
+                                                            "next": null,
+                                                            "line": 7,
+                                                            "column": 111,
+                                                            "is_statement": false
+                                                          },
+                                                          {
+                                                            "value": {
+                                                              "Call": [
+                                                                "to_string",
+                                                                [],
+                                                                true
+                                                              ]
+                                                            },
+                                                            "next": null,
+                                                            "line": 7,
+                                                            "column": 124,
+                                                            "is_statement": true
+                                                          }
+                                                        ]
+                                                      },
+                                                      "next": null,
+                                                      "line": 7,
+                                                      "column": 124,
+                                                      "is_statement": false
+                                                    }
+                                                  ]
+                                                }
+                                              },
+                                              "next": null,
+                                              "line": 7,
+                                              "column": 124,
+                                              "is_statement": false
+                                            }
+                                          ]
+                                        ]
+                                      }
+                                    },
+                                    "next": null,
+                                    "line": 7,
+                                    "column": 125,
+                                    "is_statement": false
+                                  },
+                                  true,
+                                  false
+                                ]
+                              }
+                            },
+                            "next": {
+                              "value": "EndStatement",
+                              "next": {
+                                "value": {
+                                  "Call": [
+                                    "write_file",
+                                    [
+                                      {
+                                        "value": {
+                                          "DataType": {
+                                            "String": "./test-dir/test.txt"
+                                          }
+                                        },
+                                        "next": null,
+                                        "line": 8,
+                                        "column": 38,
+                                        "is_statement": false
+                                      },
+                                      {
+                                        "value": {
+                                          "Variable": [
+                                            {
+                                              "value": "Null",
+                                              "next": null,
+                                              "line": 8,
+                                              "column": 46,
+                                              "is_statement": false
+                                            },
+                                            "content",
+                                            false,
+                                            false,
+                                            null
+                                          ]
+                                        },
+                                        "next": null,
+                                        "line": 8,
+                                        "column": 46,
+                                        "is_statement": false
+                                      }
+                                    ],
+                                    true
+                                  ]
+                                },
+                                "next": {
+                                  "value": "EndStatement",
+                                  "next": {
+                                    "value": {
+                                      "SingleComment": [
+                                        " 登録済みシステム関数情報を読み込み",
+                                        [
+                                          10,
+                                          5
+                                        ]
+                                      ]
+                                    },
+                                    "next": {
+                                      "value": {
+                                        "SingleComment": [
+                                          "let read_system_func = @read_file(\"./test-dir/test.txt\");",
+                                          [
+                                            11,
+                                            5
+                                          ]
+                                        ]
+                                      },
+                                      "next": {
+                                        "value": {
+                                          "SingleComment": [
+                                            "let out =@cmd(\"mpv\",[\"C:/Users/tanukimaru/Downloads/sounds/*\"]);",
+                                            [
+                                              13,
+                                              5
+                                            ]
+                                          ]
+                                        },
+                                        "next": null,
+                                        "line": 15,
+                                        "column": 1,
+                                        "is_statement": false
+                                      },
+                                      "line": 13,
+                                      "column": 5,
+                                      "is_statement": false
+                                    },
+                                    "line": 11,
+                                    "column": 5,
+                                    "is_statement": false
+                                  },
+                                  "line": 10,
+                                  "column": 5,
+                                  "is_statement": false
+                                },
+                                "line": 8,
+                                "column": 47,
+                                "is_statement": true
+                              },
+                              "line": 8,
+                              "column": 5,
+                              "is_statement": false
+                            },
+                            "line": 7,
+                            "column": 125,
+                            "is_statement": true
+                          },
+                          "line": 7,
+                          "column": 5,
+                          "is_statement": false
+                        },
+                        "line": 6,
+                        "column": 36,
+                        "is_statement": true
+                      },
+                      "line": 6,
+                      "column": 5,
+                      "is_statement": false
+                    },
+                    "line": 5,
+                    "column": 27,
+                    "is_statement": true
+                  },
+                  "line": 5,
+                  "column": 5,
+                  "is_statement": false
+                },
+                "line": 4,
+                "column": 23,
+                "is_statement": true
+              },
+              "line": 4,
+              "column": 5,
+              "is_statement": false
+            },
+            "line": 3,
+            "column": 23,
+            "is_statement": true
+          }
+        ]
+      },
+      "next": null,
+      "line": 15,
+      "column": 1,
+      "is_statement": false
+    },
+    "line": 2,
+    "column": 1,
+    "is_statement": false
+  }
+}
