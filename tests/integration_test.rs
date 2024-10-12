@@ -37,15 +37,16 @@ fn all_default_run() {
             .expect("カレントディレクトリの設定に失敗しました");
 
         #[cfg(any(feature = "full", feature = "decoder"))]
-        let contents = std::fs::read_to_string("example/main.sc").unwrap();
-        let tokens = Lexer::from_tokenize("example/main.sc", contents.clone()).unwrap();
+        let main_script = "example/main.txt";
+        let contents = std::fs::read_to_string(main_script).unwrap();
+        let tokens = Lexer::from_tokenize(main_script, contents.clone()).unwrap();
         debug!("tokens: {:?}", tokens.clone());
 
-        let nodes = if let Err(e) = Parser::from_parse(&tokens, "example/main.sc", contents.clone())
+        let nodes = if let Err(e) = Parser::from_parse(&tokens, main_script, contents.clone())
         {
             eprintln!("{}", e);
             return;
-        } else if let Ok(v) = Parser::from_parse(&tokens, "example/main.sc", contents.clone()) {
+        } else if let Ok(v) = Parser::from_parse(&tokens, main_script, contents.clone()) {
             v
         } else {
             Box::new(Node::default())
@@ -56,7 +57,7 @@ fn all_default_run() {
         */
 
         debug!("nodes: {:?}", nodes.clone());
-        let mut decoder = Decoder::load_scriptd("example/main.sc", &nodes)
+        let mut decoder = Decoder::load_scriptd(main_script, &nodes)
             .unwrap_or_else(|e| {
                 eprintln!("{}", e);
                 Decoder::new()

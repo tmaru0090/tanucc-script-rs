@@ -1,3 +1,5 @@
+// たぬぅスクリプト[0.1]
+
 // std.script
 type u8 = "u8";
 type u16 = "u16";
@@ -25,7 +27,7 @@ type array = "array";
 type bool = "bool";
 struct Vector;
 struct HashMap;
-sturct IO;
+struct IO;
 struct File;
 struct Memory;
 struct __UTF8_String{
@@ -47,6 +49,5 @@ impl String{
         }
     }
 }
-
 
 
