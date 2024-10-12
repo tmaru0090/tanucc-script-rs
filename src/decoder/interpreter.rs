@@ -800,31 +800,6 @@ impl Decoder {
         }
         Ok(value)
     }
-    /*
-    fn eval_block(&mut self, block: &Vec<Box<Node>>) -> Result<SystemValue, String> {
-        let mut result = SystemValue::Null;
-        let initial_local_context = self.context.local_context.clone(); // 現在のローカルコンテキストを保存
-
-        for _b in block {
-            for b in _b.iter() {
-                // ノードを評価
-                result = self.execute_node(b)?;
-                // return 文が評価された場合、ブロックの評価を終了
-                if let NodeValue::ControlFlow(ControlFlow::Return(_)) = b.value() {
-                    break;
-                }
-                // EndStatementがある場合に処理を中断していないか確認
-                if let NodeValue::EndStatement = b.value() {
-                    continue; // EndStatementは単なる区切りなので、次のノードの評価を続行
-                }
-            }
-        }
-
-        // ブロックの処理が終わったらローカルコンテキストを元に戻す
-        self.context.local_context = initial_local_context;
-        Ok(result)
-    }
-    */
 
     fn eval_block(&mut self, block: &Vec<Box<Node>>) -> Result<SystemValue, String> {
         let mut result = SystemValue::Null;
@@ -851,20 +826,6 @@ impl Decoder {
         self.context.local_context = initial_local_context;
         Ok(result)
     }
-    /*
-    fn eval_include(&mut self, file_name: &String) -> Result<SystemValue, String> {
-        self.add_first_ast_from_file(file_name)?;
-        let ast_map = self.ast_map.clone();
-        let _node = ast_map.get(file_name).unwrap();
-        let mut result = SystemValue::Null;
-        let mut current_node = _node.clone();
-        self.current_node = Some((file_name.clone(), _node.clone()));
-        for node in current_node.iter(){
-            result = self.execute_node(&node)?;
-        }
-        Ok(result)
-    }
-    */
 
     fn eval_include(&mut self, file_name: &String) -> Result<SystemValue, String> {
         self.add_first_ast_from_file(file_name)?;
@@ -904,40 +865,6 @@ impl Decoder {
         debug!("MultiComment added at line {}, column {}", lines.0, lines.1);
         Ok(result)
     }
-    /*
-        fn eval_array(
-            &mut self,
-            data_type: &Box<Node>,
-            values: &Vec<Box<Node>>,
-        ) -> Result<SystemValue, String> {
-            // 型を評価
-            let v_type = match data_type.value {
-                NodeValue::DataType(ref d) => self.execute_node(&Node {
-                    value: NodeValue::DataType(d.clone()),
-                    ..Node::default()
-                })?,
-                _ => SystemValue::Null,
-            };
-
-            // 各値を評価し、型チェックを行う
-            let mut array = Vec::new();
-            for _value in values {
-                for value in _value.iter() {
-                    let v_value = self.execute_node(&*value)?;
-                    if v_value == SystemValue::Null {
-                        continue;
-                    }
-                    //self.check_type(&v_value, v_type.as_str().unwrap_or(""))?;
-                    array.push(SystemValue::Pointer(Box::new(v_value)));
-                }
-            }
-
-            // 配列全体をヒープにコピー
-            self.memory_mgr.allocate(array.clone());
-            // 結果を返す
-            Ok(SystemValue::Array(array.clone()))
-        }
-    */
 
     fn eval_array(
         &mut self,
@@ -960,9 +887,9 @@ impl Decoder {
             for value in _value.iter() {
                 let value_borrowed = value.borrow(); // Rc<RefCell<Node>>の借用を取得
                 let v_value = self.execute_node(&*value_borrowed)?; // 借用を渡す
-                if v_value == SystemValue::Null {
-                    continue;
-                }
+                                                                    //        if v_value == SystemValue::Null {
+                                                                    //          continue;
+                                                                    //     }
                 array.push(SystemValue::Pointer(Box::new(v_value)));
             }
         }
@@ -1218,8 +1145,8 @@ impl Decoder {
         }
 
         debug!("Syntax registered: {:?}", user_syntax.clone());
-        debug!("current_node: {:?}", self.current_node());
-        debug!("new ast_maps: {:?}", self.ast_map.clone());
+        // debug!("current_node: {:?}", self.current_node());
+        //debug!("new ast_maps: {:?}", self.ast_map.clone());
         return Ok(SystemValue::Null);
     }
 
@@ -1877,7 +1804,7 @@ impl Decoder {
             );
         }
 
-        debug!("VariableDeclaration: name = {:?}, data_type = {:?}, value = {:?}, address = {:?} is_mutable: {} is_local: {} value_is_mutable: {:?} value_is_reference: {:?}", name, v_type, v_value, address,is_mutable,is_local,value_is_mutable,value_is_reference);
+        debug!("VariableDeclaration: name = {:?}, data_type = {:?}, value = {:?}, address = {:?} size = {:?} is_mutable: {} is_local: {} value_is_mutable: {:?} value_is_reference: {:?}", name, v_type, v_value, address,v_value.size(),is_mutable,is_local,value_is_mutable,value_is_reference);
         let line = self.current_node.clone().unwrap().1.line();
         let column = self.current_node.clone().unwrap().1.column();
         self.context
@@ -1901,10 +1828,12 @@ impl Decoder {
                 self.current_node.clone().unwrap().1.line(),
                 self.current_node.clone().unwrap().1.column(),
                 &self.current_node.clone().unwrap().0,
-                &self
+                /*&self
                     .file_contents
                     .get(&self.current_node.clone().unwrap().0)
                     .unwrap(),
+                */
+                "",
                 "type '{}' is already defined",
                 name
             ));
@@ -2500,169 +2429,286 @@ impl Decoder {
         }
     }
 
-    /*
-        pub fn eval_impl_statement(
-            &mut self,
-            name: &String,
-            members: &Vec<Box<Node>>,
-        ) -> Result<Value, String> {
-            // グローバルコンテキストへのアクセス
-            let context = &mut self.context.global_context;
+    pub fn eval_impl_statement(
+        &mut self,
+        name: &String,
+        members: &Vec<Box<Node>>,
+    ) -> Result<SystemValue, String> {
+        // グローバルコンテキストへのアクセス
+        let context = &mut self.context.global_context;
 
-            // 既に構造体が定義されているかチェック
-            if !context.contains_key(name) {
-                return Err(format!(
-                    "Struct '{}' is not defined. Please define the struct before implementing.",
-                    name
-                ));
-            }
-
-            // 既存の構造体を取得
-            let struct_var = context.get_mut(name).unwrap();
-
-            // 変数が`serde_json::Map`であることを確認し、`HashMap`に変換
-            let mut structs_map: HashMap<String, Value> = match &struct_var.value {
-                Value::Object(map) => map.clone().into_iter().collect(), // 変換処理
-                _ => {
-                    return Err(format!(
-                        "The value associated with '{}' is not a HashMap.",
-                        name
-                    ));
-                }
-            };
-
-            // メンバーをイテレートしてマッピングを作成
-            let member_map: HashMap<String, Value> = members
-                .iter()
-                .filter_map(|m| {
-                    // `m.node_value()` で NodeValue を取得
-                    let node_value = &m.value();
-                    match node_value {
-                        NodeValue::Declaration(Declaration::Function(
-                            func_name,
-                            args,
-                            body,
-                            return_type,
-                            _is_system,
-                        )) => {
-                            // メンバー名を関数名とする
-                            let member_name = func_name.clone();
-
-                            // 関数の引数、戻り値の型と本体を取得
-                            let function_info = serde_json::json!({
-                                "args": args,
-                                "return_type": return_type,
-                                "body": body,
-                            });
-
-                            Some((member_name, function_info))
-                        }
-                        _ => None, // Function 以外はスキップ
-                    }
-                })
-                .collect();
-
-            // 既存の`HashMap`に新しいメンバーを追加
-            structs_map.extend(member_map);
-
-            // 更新した構造体をグローバルコンテキストに戻す
-            struct_var.value = serde_json::json!(structs_map);
-
-            // ログ出力
-            debug!(
-                "Struct '{}' updated with new members: {:?}",
-                name, struct_var.value
-            );
-
-            Ok(struct_var.value.clone())
+        // 既に構造体が定義されているかチェック
+        if !context.contains_key(name) {
+            return Err(compile_error!(
+                "error",
+                self.current_node.clone().unwrap().1.line(),
+                self.current_node.clone().unwrap().1.column(),
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Struct '{}' is not defined",
+                name
+            ));
         }
-        fn eval_struct_statement(
-            &mut self,
-            name: &String,
-            members: &Vec<Box<Node>>,
-        ) -> Result<Value, String> {
-            // 一時的にcontextの借用を解除
-            let context = //if *is_local {
-          //      &mut self.context.local_context
-           // } else {
-                &mut self.context.global_context;
-            // };
 
-            if context.contains_key(&name.clone()) {
-                return Err(compile_error!(
-                    "error",
-                    self.current_node.clone().unwrap().1.line(),
-                    self.current_node.clone().unwrap().1.column(),
-                    &self.current_node.clone().unwrap().0,
-                    &self
-                        .file_contents
-                        .get(&self.current_node.clone().unwrap().0)
-                        .unwrap(),
-                    "Struct '{}' is already defined",
-                    name
-                ));
-            }
+        // 既存の構造体を取得
+        let struct_var = context.get_mut(name).unwrap();
 
-            let mut structs: HashMap<String, Value> = HashMap::new();
-
-            // メンバーをイテレートしてマッピングを作成
-            let member_map: HashMap<String, Value> = members
-                .iter()
-                .filter_map(|m| {
-                    // メンバーの名前を取得
-                    let member_name = if let NodeValue::Variable(_, ref v, _, _) = m.value {
-                        v.clone()
-                    } else {
-                        return None; // 変数以外のメンバーはスキップ
-                    };
-
-                    // メンバーの型を取得
-                    let member_type = if let NodeValue::Variable(ref v, _, _, _) = m.value {
-                        if let NodeValue::DataType(ref data_type) = v.value {
-                            match data_type {
-                                DataType::Int(_) => "int".to_string(),
-                                DataType::Float(_) => "float".to_string(),
-                                DataType::String(v) => v.clone(),
-                                DataType::Bool(_) => "bool".to_string(),
-                                DataType::Unit(_) => "unit".to_string(),
+        // 変数が`SystemValue::Struct`であることを確認
+        let mut structs_map: HashMap<String, SystemValue> = match &struct_var.value {
+            SystemValue::Struct(fields) => {
+                let mut map = HashMap::new();
+                if let SystemValue::Array(members) = &fields[1] {
+                    for member in members {
+                        if let SystemValue::Tuple(tuple) = member {
+                            if let SystemValueTuple::Tuple2(name, value) = &**tuple {
+                                if let SystemValue::String(name_str) = &**name {
+                                    map.insert(name_str.clone(), (**value).clone());
+                                }
                             }
-                        } else {
-                            "unknown".to_string()
+                        }
+                    }
+                }
+                map
+            }
+            _ => {
+                return Err(format!(
+                    "The value associated with '{}' is not a Struct.",
+                    name
+                ));
+            }
+        };
+
+        // メンバーをイテレートしてマッピングを作成
+        let member_map: HashMap<String, SystemValue> = members
+            .iter()
+            .filter_map(|m| {
+                // `m.value` で NodeValue を取得
+                let node_value = &m.value;
+                match node_value {
+                    NodeValue::Declaration(Declaration::Function(
+                        func_name,
+                        args,
+                        body,
+                        return_type,
+                        _is_system,
+                    )) => {
+                        // メンバー名を関数名とする
+                        let member_name = func_name.clone();
+
+                        // 関数の引数、戻り値の型と本体を取得
+                        let function_info = SystemValue::Struct(vec![
+                            SystemValue::Array(
+                                args.iter()
+                                    .map(|(arg, _)| SystemValue::String(format!("{:?}", arg)))
+                                    .collect(),
+                            ),
+                            SystemValue::String(format!("{:?}", return_type.value)),
+                            SystemValue::String(format!("{:?}", body.value)),
+                        ]);
+
+                        Some((member_name, function_info))
+                    }
+                    _ => None, // Function 以外はスキップ
+                }
+            })
+            .collect();
+
+        // 既存の`HashMap`に新しいメンバーを追加
+        structs_map.extend(member_map);
+
+        // 更新した構造体をグローバルコンテキストに戻す
+        let updated_struct = SystemValue::Struct(vec![
+            SystemValue::String(name.clone()),
+            SystemValue::Array(
+                structs_map
+                    .into_iter()
+                    .map(|(k, v)| {
+                        SystemValue::Tuple(Box::new(SystemValueTuple::Tuple2(
+                            Box::new(SystemValue::String(k)),
+                            Box::new(v),
+                        )))
+                    })
+                    .collect(),
+            ),
+        ]);
+
+        struct_var.value = updated_struct.clone();
+
+        // ログ出力
+        debug!(
+            "Struct '{}' updated with new members: {:?}",
+            name, struct_var.value
+        );
+
+        Ok(updated_struct)
+    }
+
+    fn eval_struct_statement(
+        &mut self,
+        name: &String,
+        members: &Vec<Box<Node>>,
+    ) -> R<SystemValue, String> {
+        let context = &mut self.context.global_context;
+        if context.contains_key(&name.clone()) {
+            return Err(compile_error!(
+                "error",
+                self.current_node.clone().unwrap().1.line(),
+                self.current_node.clone().unwrap().1.column(),
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Struct '{}' is already defined",
+                name
+            ));
+        }
+
+        let member_map: HashMap<String, SystemValue> = members
+            .iter()
+            .filter_map(|m| {
+                let member_name = if let NodeValue::Variable(_, ref v, _, _, _) = m.value {
+                    v.clone()
+                } else {
+                    return None;
+                };
+
+                let member_type = if let NodeValue::Variable(ref v, _, _, _, _) = m.value {
+                    if let NodeValue::DataType(ref data_type) = v.value {
+                        match data_type {
+                            DataType::Int(_) => SystemValue::String("i64".to_string()),
+                            DataType::Float(_) => SystemValue::String("f64".to_string()),
+                            DataType::String(_) => SystemValue::String("string".to_string()),
+                            DataType::Bool(_) => SystemValue::String("bool".to_string()),
+                            DataType::Unit(_) => SystemValue::String("unit".to_string()),
+                            _ => SystemValue::String("unknown".to_string()),
                         }
                     } else {
-                        "unknown".to_string()
-                    };
+                        SystemValue::String("unknown".to_string())
+                    }
+                } else {
+                    SystemValue::String("unknown".to_string())
+                };
 
-                    Some((member_name, serde_json::json!(member_type)))
-                })
-                .collect();
+                Some((member_name, member_type))
+            })
+            .collect();
 
-            structs.insert(name.clone(), serde_json::json!(member_map));
+        let member_pointers: Vec<SystemValue> = member_map
+            .into_iter()
+            .map(|(k, v)| {
+                SystemValue::Tuple(Box::new(SystemValueTuple::Tuple2(
+                    Box::new(SystemValue::String(k)),
+                    Box::new(v),
+                )))
+            })
+            .collect();
 
-            // 構造体全体をJsonとして保存
-            let value = serde_json::json!(structs);
+        let value = SystemValue::Struct(vec![
+            SystemValue::String(name.clone()),
+            SystemValue::Array(member_pointers),
+        ]);
 
-            // グローバルコンテキストに変数として保存
-            let variables = Variable {
-                value: value.clone(),
-                data_type: Value::Null,
-                address: uuid::Uuid::nil(),
-                is_mutable: false,
-                size: value.to_string().len(),
-            };
-            self.context.global_context.insert(name.clone(), variables);
+        let variables = Variable {
+            value: value.clone(),
+            data_name: name.clone(),
+            address: uuid::Uuid::nil(),
+            is_mutable: false,
+            size: value.to_string().len(),
+        };
 
-            // ログ出力
-            debug!(
-                "StructDefined: name = {:?}, value = {:?}, size = {:?}",
-                name,
-                value.clone(),
-                value.to_string().len()
-            );
+        self.context.global_context.insert(name.clone(), variables);
+        debug!(
+            "StructDefined: name={:?}, value={:?}, size={:?}",
+            name,
+            value.clone(),
+            value.to_string().len()
+        );
+        Ok(value)
+    }
 
-            Ok(value)
+    fn eval_struct_instance_statement(
+        &mut self,
+        name: &String,
+        init_values: &Vec<(String, Box<Node>)>,
+    ) -> R<SystemValue, String> {
+        let context = &mut self.context.global_context;
+        if !context.contains_key(&name.clone()) {
+            return Err(compile_error!(
+                "error",
+                self.current_node.clone().unwrap().1.line(),
+                self.current_node.clone().unwrap().1.column(),
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Struct '{}' is not in current scope",
+                name
+            ));
         }
-    */
+
+        let struct_value = context.get(name).unwrap().value.clone();
+        if let SystemValue::Struct(ref struct_data) = struct_value {
+            if let SystemValue::Array(ref members) = struct_data[1] {
+                let mut instance_members: Vec<SystemValue> = Vec::new();
+
+                for (member_name, init_value) in init_values {
+                    let member_type = members.iter().find_map(|member| {
+                        if let SystemValue::Tuple(ref tuple) = member {
+                            if let SystemValueTuple::Tuple2(ref name, _) = **tuple {
+                                if let SystemValue::String(ref name_str) = **name {
+                                    if name_str == member_name {
+                                        return Some(member);
+                                    }
+                                }
+                            }
+                        }
+                        None
+                    });
+
+                    if let Some(_) = member_type {
+                        let value = self.execute_node(init_value)?;
+                        instance_members.push(SystemValue::Tuple(Box::new(
+                            SystemValueTuple::Tuple2(
+                                Box::new(SystemValue::Pointer(Box::new(SystemValue::String(
+                                    member_name.clone(),
+                                )))),
+                                Box::new(SystemValue::Pointer(Box::new(value))),
+                            ),
+                        )));
+                    } else {
+                        return Err(compile_error!(
+                            "error",
+                            self.current_node.clone().unwrap().1.line(),
+                            self.current_node.clone().unwrap().1.column(),
+                            &self.current_node.clone().unwrap().0,
+                            &self
+                                .file_contents
+                                .get(&self.current_node.clone().unwrap().0)
+                                .unwrap(),
+                            "Member '{}' not found in struct '{}'",
+                            member_name,
+                            name
+                        ));
+                    }
+                }
+
+                let instance_value = SystemValue::Struct(vec![
+                    SystemValue::String(name.clone()),
+                    SystemValue::Array(instance_members),
+                ]);
+
+                return Ok(instance_value);
+            }
+        }
+
+        Err("Invalid struct format".to_string())
+    }
+
     fn eval_member_access(
         &mut self,
         member: &Box<Node>,
@@ -2674,39 +2720,6 @@ impl Decoder {
         let item_value =
             match item.value() {
                 NodeValue::Call(name, args, is_system) => match name.as_str() {
-                    /*
-                    "as_ptr" => {
-                        if is_system {
-                            let name = match member.value {
-                                NodeValue::Variable(_, ref v, _, _, _) => v.clone(),
-                                _ => String::new(),
-                            };
-                            let variable_data = self
-                                .context
-                                .local_context
-                                .get(&name)
-                                .cloned()
-                                .or_else(|| self.context.global_context.get(&name).cloned());
-
-                            if let Some(mut variable) = variable_data {
-                                match variable.value {
-                                    SystemValue::String(ref s) => {
-                                        let c_string = s.to_cstring();
-                                        let ptr = c_string.as_ptr();
-                                        let pointer_value = SystemValue::Pointer(Box::new(
-                                            SystemValue::Usize(ptr as usize),
-                                        ));
-                                        //panic!("{:?}",pointer_value);
-                                        ret = pointer_value;
-                                    }
-                                    _ => (),
-                                }
-                            }
-                            ret.clone()
-                        } else {
-                            SystemValue::Null
-                        }
-                    }*/
                     "max" => {
                         if is_system {
                             let mut evaluated_args = Vec::new();
@@ -2923,15 +2936,17 @@ impl Decoder {
             NodeValue::Block(block) => {
                 result = self.eval_block(&block)?;
             }
-            /*
-                        NodeValue::Declaration(Declaration::Impl(name, members)) => {
-                            result = self.eval_impl_statement(name, &members)?;
-                        }
+            NodeValue::Declaration(Declaration::Impl(name, members)) => {
+                result = self.eval_impl_statement(name, &members)?;
+            }
 
-                        NodeValue::Declaration(Declaration::Struct(name, members)) => {
-                            result = self.eval_struct_statement(name, &members)?;
-                        }
-            */
+            NodeValue::StructInstance(name, init_values) => {
+                result = self.eval_struct_instance_statement(name, &init_values)?;
+            }
+            NodeValue::Declaration(Declaration::Struct(name, members)) => {
+                result = self.eval_struct_statement(name, &members)?;
+            }
+
             NodeValue::MemberAccess(member, item) => {
                 result = self.eval_member_access(&member, &item)?;
             }

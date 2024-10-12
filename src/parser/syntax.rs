@@ -603,13 +603,24 @@ impl<'a> Parser<'a> {
                             self.current_token().unwrap().column(),
                         );
                     }
-                } else if self.peek_next_token(1).unwrap().token_type()
-                    == TokenType::ScopeResolution
-                {
-                    node = *self.parse_scope_resolution()?;
                 } else {
                     let ident_token = self.current_token().unwrap().clone();
                     self.next_token();
+                    if self.current_token().unwrap().token_type() == TokenType::LeftCurlyBrace {
+                        node = *self.parse_struct_instance(&ident_token)?;
+                        return Ok(Box::new(node));
+                    }
+
+                    if self.current_token().unwrap().token_type() == TokenType::LeftParen {
+                        node = *self.parse_function_call(token.clone(), is_system)?;
+                        return Ok(Box::new(node));
+                    }
+
+                    if self.current_token().unwrap().token_type() == TokenType::ScopeResolution {
+                        node = *self.parse_scope_resolution(&ident_token)?;
+                        return Ok(Box::new(node));
+                    }
+
                     if self.current_token().unwrap().token_type() == TokenType::Dot {
                         node = *self.parse_member_access(&ident_token)?;
                         return Ok(Box::new(node));
@@ -629,36 +640,33 @@ impl<'a> Parser<'a> {
                         self.next_token();
                         //panic!("{:?}",self.current_token());
                     }
-                    if self.current_token().unwrap().token_type() == TokenType::LeftParen {
-                        node = *self.parse_function_call(token, is_system)?;
-                    } else {
-                        let mut data_type = Parser::<'a>::new_null(
-                            self.current_token().unwrap().line(),
-                            self.current_token().unwrap().column(),
-                        );
 
-                        if self.current_token().unwrap().token_type() == TokenType::Colon {
-                            self.next_token();
-                            data_type = self.parse_data_type()?;
-                        }
-                        let _generic_type_name = if generic_type_name.is_empty() {
-                            None
-                        } else {
-                            Some(generic_type_name)
-                        };
-                        node = Node::new(
-                            NodeValue::Variable(
-                                data_type,
-                                token.token_value().clone(),
-                                is_mutable,
-                                is_reference,
-                                _generic_type_name,
-                            ),
-                            None,
-                            self.current_token().unwrap().line(),
-                            self.current_token().unwrap().column(),
-                        );
+                    let mut data_type = Parser::<'a>::new_null(
+                        self.current_token().unwrap().line(),
+                        self.current_token().unwrap().column(),
+                    );
+
+                    if self.current_token().unwrap().token_type() == TokenType::Colon {
+                        self.next_token();
+                        data_type = self.parse_data_type()?;
                     }
+                    let _generic_type_name = if generic_type_name.is_empty() {
+                        None
+                    } else {
+                        Some(generic_type_name)
+                    };
+                    node = Node::new(
+                        NodeValue::Variable(
+                            data_type,
+                            token.token_value().clone(),
+                            is_mutable,
+                            is_reference,
+                            _generic_type_name,
+                        ),
+                        None,
+                        self.current_token().unwrap().line(),
+                        self.current_token().unwrap().column(),
+                    );
                 }
             }
             TokenType::LeftParen => {
@@ -707,53 +715,45 @@ impl<'a> Parser<'a> {
         }
         Ok(Box::new(node))
     }
-    fn parse_scope_resolution(&mut self) -> R<Box<Node>, String> {
+
+    fn parse_scope_resolution(&mut self, ident_token: &Token) -> R<Box<Node>, String> {
         let mut scope_resolution = vec![];
-        let ident = self.current_token().unwrap();
+
+        // 最初のトークンはident_tokenをVariableとして扱う
         scope_resolution.push(Box::new(Node::new(
             NodeValue::Variable(
-                Parser::<'a>::new_null(
-                    self.current_token().unwrap().line(),
-                    self.current_token().unwrap().column(),
-                ),
-                ident.token_value().clone(),
+                Parser::<'a>::new_null(ident_token.line(), ident_token.column()),
+                ident_token.token_value().clone(),
                 false,
                 false,
                 None,
             ),
             None,
-            self.current_token().unwrap().line(),
-            self.current_token().unwrap().column(),
+            ident_token.line(),
+            ident_token.column(),
         )));
-        self.next_token();
 
-        // panic!("{:?}",scope_resolution);
+        // 二個目以降はself.exprを呼ぶ
         while self.current_token().unwrap().token_type() == TokenType::ScopeResolution {
             self.next_token(); // ::
-            let scope = self.expr()?;
-            scope_resolution.push(scope.clone());
-            /*         if let NodeValue::Variable(data_type, name) = &scope.value() {
+            let scope = if self.peek_next_token(1).unwrap().token_type() == TokenType::LeftParen {
+                let ident_token = self.current_token().unwrap().clone();
+                self.next_token(); // ident
+                self.parse_function_call(ident_token, false)?
             } else {
-                return Err(compile_error!(
-                    "error",
-                    self.current_token().unwrap().line(),
-                    self.current_token().unwrap().column(),
-                    &self.input_path(),
-                    &self.input_content(),
-                    "Expected Variable but found {:?} at line {}, column {}.",
-                    scope.clone().value(),
-                    scope.clone().line(),
-                    scope.clone().column()
-                ));
-            }*/
+                self.expr()?
+            };
+            scope_resolution.push(scope);
         }
-        return Ok(Box::new(Node::new(
+
+        Ok(Box::new(Node::new(
             NodeValue::ScopeResolution(scope_resolution),
             None,
             self.current_token().unwrap().line(),
             self.current_token().unwrap().column(),
-        )));
+        )))
     }
+
     fn parse_function_call(&mut self, token: Token, is_system: bool) -> R<Box<Node>, String> {
         self.next_token(); // '(' をスキップ
         let mut args = Vec::new();
@@ -1511,7 +1511,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_include(&mut self) -> R<Box<Node>, String> {
-        self.next_token(); // @
         self.next_token(); // include
         let include_file_path = self.current_token().unwrap().token_value().clone();
         let include_node = Node::new(
@@ -1521,6 +1520,7 @@ impl<'a> Parser<'a> {
             self.current_token().unwrap().column(),
         );
         self.next_token();
+
         Ok(Box::new(include_node))
     }
     fn parse_impl_definition(&mut self) -> R<Box<Node>, String> {
@@ -1546,7 +1546,40 @@ impl<'a> Parser<'a> {
             Err(String::from(""))
         }
     }
+    fn parse_struct_instance(&mut self, ident_token: &Token) -> R<Box<Node>, String> {
+        let struct_name = ident_token.token_value().clone();
+        let mut field_value = vec![];
+        self.next_token(); // {
+        while self.current_token().unwrap().token_type() != TokenType::Eof
+            && self.current_token().unwrap().token_type() != TokenType::RightCurlyBrace
+            && self.current_token().unwrap().token_type() != TokenType::Semi
+        {
+            if self.current_token().unwrap().token_type() == TokenType::Conma {
+                self.next_token();
+                continue;
+            }
+            if self.current_token().unwrap().token_type() == TokenType::Ident {
+                //panic!("{:?}", self.current_token());
+                let name = self.current_token().unwrap().token_value();
+                self.next_token();
+                if self.current_token().unwrap().token_type() == TokenType::Colon {
+                    self.next_token(); // :
+                    let value = self.expr()?;
+                    //panic!("{:?}", self.current_token());
+                    field_value.push((name.clone(), value));
+                }
+            }
+            self.next_token();
+        }
 
+        //panic!("{:?} {:?}", self.current_token(), field_value);
+        Ok(Box::new(Node::new(
+            NodeValue::StructInstance(struct_name, field_value),
+            None,
+            self.current_token().unwrap().line(),
+            self.current_token().unwrap().column(),
+        )))
+    }
     fn parse_struct_definition(&mut self) -> R<Box<Node>, String> {
         self.next_token(); // struct
         let var = self.current_token().unwrap().token_value().clone();
@@ -1708,9 +1741,8 @@ impl<'a> Parser<'a> {
             && self.current_token().unwrap().token_value() == "continue"
         {
             self.parse_continue()
-        } else if self.current_token().unwrap().token_type() == TokenType::AtSign
-            && self.peek_next_token(1).unwrap().token_type() == TokenType::Ident
-            && self.peek_next_token(1).unwrap().token_value() == "include"
+        } else if self.current_token().unwrap().token_type() == TokenType::Ident
+            && self.current_token().unwrap().token_value() == "include"
         {
             self.parse_include()
         } else if self.current_token().unwrap().token_type() == TokenType::LeftCurlyBrace {

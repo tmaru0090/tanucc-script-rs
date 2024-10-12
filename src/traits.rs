@@ -29,18 +29,96 @@ impl Size for SystemValue {
             SystemValue::F64(_) => mem::size_of::<f64>(),
             SystemValue::String(s) => mem::size_of::<String>() + s.len(),
             SystemValue::Array(arr) => {
-                mem::size_of::<Vec<Box<SystemValue>>>()
-                    + arr.iter().map(|v| v.size()).sum::<usize>()
+                mem::size_of::<Vec<SystemValue>>() + arr.iter().map(|v| v.size()).sum::<usize>()
             }
-            SystemValue::Pointer(_) => mem::size_of::<Box<SystemValue>>(), // ポインタのサイズ
-            SystemValue::Tuple(vec) => {
-                mem::size_of::<Vec<Box<SystemValue>>>()
-                    + vec.iter().map(|v| v.size()).sum::<usize>()
-            }
+            SystemValue::Pointer(_) => mem::size_of::<Box<SystemValue>>(),
+            SystemValue::Tuple(tuple) => match &**tuple {
+                SystemValueTuple::Tuple1(v1) => v1.size(),
+                SystemValueTuple::Tuple2(v1, v2) => v1.size() + v2.size(),
+                SystemValueTuple::Tuple3(v1, v2, v3) => v1.size() + v2.size() + v3.size(),
+                SystemValueTuple::Tuple4(v1, v2, v3, v4) => {
+                    v1.size() + v2.size() + v3.size() + v4.size()
+                }
+                SystemValueTuple::Tuple5(v1, v2, v3, v4, v5) => {
+                    v1.size() + v2.size() + v3.size() + v4.size() + v5.size()
+                }
+                SystemValueTuple::Tuple6(v1, v2, v3, v4, v5, v6) => {
+                    v1.size() + v2.size() + v3.size() + v4.size() + v5.size() + v6.size()
+                }
+                SystemValueTuple::Tuple7(v1, v2, v3, v4, v5, v6, v7) => {
+                    v1.size()
+                        + v2.size()
+                        + v3.size()
+                        + v4.size()
+                        + v5.size()
+                        + v6.size()
+                        + v7.size()
+                }
+                SystemValueTuple::Tuple8(v1, v2, v3, v4, v5, v6, v7, v8) => {
+                    v1.size()
+                        + v2.size()
+                        + v3.size()
+                        + v4.size()
+                        + v5.size()
+                        + v6.size()
+                        + v7.size()
+                        + v8.size()
+                }
+                SystemValueTuple::Tuple9(v1, v2, v3, v4, v5, v6, v7, v8, v9) => {
+                    v1.size()
+                        + v2.size()
+                        + v3.size()
+                        + v4.size()
+                        + v5.size()
+                        + v6.size()
+                        + v7.size()
+                        + v8.size()
+                        + v9.size()
+                }
+                SystemValueTuple::Tuple10(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10) => {
+                    v1.size()
+                        + v2.size()
+                        + v3.size()
+                        + v4.size()
+                        + v5.size()
+                        + v6.size()
+                        + v7.size()
+                        + v8.size()
+                        + v9.size()
+                        + v10.size()
+                }
+                SystemValueTuple::Tuple11(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11) => {
+                    v1.size()
+                        + v2.size()
+                        + v3.size()
+                        + v4.size()
+                        + v5.size()
+                        + v6.size()
+                        + v7.size()
+                        + v8.size()
+                        + v9.size()
+                        + v10.size()
+                        + v11.size()
+                }
+                SystemValueTuple::Tuple12(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12) => {
+                    v1.size()
+                        + v2.size()
+                        + v3.size()
+                        + v4.size()
+                        + v5.size()
+                        + v6.size()
+                        + v7.size()
+                        + v8.size()
+                        + v9.size()
+                        + v10.size()
+                        + v11.size()
+                        + v12.size()
+                }
+            },
+            SystemValue::Struct(fields) => fields.iter().map(|v| v.size()).sum(),
         }
     }
 }
-
 #[cfg(any(feature = "full", feature = "decoder"))]
 impl From<Rc<RefCell<Node>>> for SystemValue {
     fn from(node: Rc<RefCell<Node>>) -> Self {
@@ -1083,7 +1161,7 @@ impl From<bool> for SystemValue {
 impl<T1: Into<SystemValue>> From<(T1,)> for SystemValue {
     fn from(tuple: (T1,)) -> Self {
         let (first,) = tuple;
-        SystemValue::Tuple(vec![SystemValue::Pointer(Box::new(first.into()))])
+        SystemValue::Tuple(Box::new(SystemValueTuple::Tuple1(Box::new(first.into()))))
     }
 }
 
@@ -1091,23 +1169,64 @@ impl<T1: Into<SystemValue>> From<(T1,)> for SystemValue {
 impl<T1: Into<SystemValue>, T2: Into<SystemValue>> From<(T1, T2)> for SystemValue {
     fn from(tuple: (T1, T2)) -> Self {
         let (first, second) = tuple;
-        SystemValue::Tuple(vec![
-            SystemValue::Pointer(Box::new(first.into())),
-            SystemValue::Pointer(Box::new(second.into())),
-        ])
+        SystemValue::Tuple(Box::new(SystemValueTuple::Tuple2(
+            Box::new(first.into()),
+            Box::new(second.into()),
+        )))
     }
 }
+
 // 3要素のタプル
 impl<T1: Into<SystemValue>, T2: Into<SystemValue>, T3: Into<SystemValue>> From<(T1, T2, T3)>
     for SystemValue
 {
     fn from(tuple: (T1, T2, T3)) -> Self {
         let (first, second, third) = tuple;
-        SystemValue::Tuple(vec![
-            SystemValue::Pointer(Box::new(first.into())),
-            SystemValue::Pointer(Box::new(second.into())),
-            SystemValue::Pointer(Box::new(third.into())),
-        ])
+        SystemValue::Tuple(Box::new(SystemValueTuple::Tuple3(
+            Box::new(first.into()),
+            Box::new(second.into()),
+            Box::new(third.into()),
+        )))
+    }
+}
+
+// 4要素のタプル
+impl<
+        T1: Into<SystemValue>,
+        T2: Into<SystemValue>,
+        T3: Into<SystemValue>,
+        T4: Into<SystemValue>,
+    > From<(T1, T2, T3, T4)> for SystemValue
+{
+    fn from(tuple: (T1, T2, T3, T4)) -> Self {
+        let (first, second, third, fourth) = tuple;
+        SystemValue::Tuple(Box::new(SystemValueTuple::Tuple4(
+            Box::new(first.into()),
+            Box::new(second.into()),
+            Box::new(third.into()),
+            Box::new(fourth.into()),
+        )))
+    }
+}
+
+// 5要素のタプル
+impl<
+        T1: Into<SystemValue>,
+        T2: Into<SystemValue>,
+        T3: Into<SystemValue>,
+        T4: Into<SystemValue>,
+        T5: Into<SystemValue>,
+    > From<(T1, T2, T3, T4, T5)> for SystemValue
+{
+    fn from(tuple: (T1, T2, T3, T4, T5)) -> Self {
+        let (first, second, third, fourth, fifth) = tuple;
+        SystemValue::Tuple(Box::new(SystemValueTuple::Tuple5(
+            Box::new(first.into()),
+            Box::new(second.into()),
+            Box::new(third.into()),
+            Box::new(fourth.into()),
+            Box::new(fifth.into()),
+        )))
     }
 }
 
@@ -1143,8 +1262,11 @@ impl fmt::Display for SystemValue {
             }
             SystemValue::Pointer(ptr) => write!(f, "{}", ptr),
             SystemValue::Tuple(vec) => {
-                let elements: Vec<String> = vec.iter().map(|v| format!("{}", v)).collect();
-                write!(f, "({})", elements.join(", "))
+                //  let elements: Vec<String> = vec.iter().map(|v| format!("{}", v)).collect();
+                write!(f, "")
+            }
+            SystemValue::Struct(_) => {
+                write!(f, "")
             }
         }
     }

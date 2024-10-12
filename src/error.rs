@@ -5,6 +5,25 @@ use thiserror::Error;
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthChar;
 use unicode_width::UnicodeWidthStr;
+#[derive(Debug)]
+pub struct CompilerErrorCode {
+    pub code: &'static str,
+    pub message: &'static str,
+}
+
+macro_rules! error_code {
+    ($name:ident, $code:expr, $message:expr) => {
+        pub const $name: CompilerErrorCode = CompilerErrorCode {
+            code: $code,
+            message: $message,
+        };
+    };
+}
+
+// 各エラーコードの定義を行う
+error_code!(SYNTAX_ERROR, "E1110", "Syntax error encountered");
+error_code!(TYPE_ERROR, "E1120", "Type mismatch error");
+error_code!(UNDEFINED_VARIABLE, "E1130", "Undefined variable");
 
 pub struct CompilerError {
     messages: Vec<ErrorMessage>,
@@ -55,52 +74,6 @@ impl CompilerError {
             });
         }
     }
-    /*
-    pub fn format_error_string(&self, file: &str, source_code: &str) -> String {
-        let mut result = String::new();
-        for msg in &self.messages {
-            let color = match msg.level.as_str() {
-                "warning" => "warning".yellow().bold(),
-                "error" => "error".red().bold(),
-                "note" => "note".blue().bold(),
-                _ => "info".normal(),
-            };
-            result.push_str(&format!(
-                "{}: {}\n  {} {}:{}:{}\n",
-                color,
-                msg.message,
-                "-->".blue().bold(),
-                file,
-                msg.lines[0].0,
-                msg.lines[0].1
-            ));
-            for &(line, column) in &msg.lines {
-                if let Some(source_line) = source_code.lines().nth(line - 1) {
-                    result.push_str(&format!(
-                        "{} {}   {}  \n",
-                        line.to_string().blue().bold(),
-                        "|".blue().bold(),
-                        source_line
-                    ));
-                    result.push_str(&format!(
-                        "   {} {}  {}  \n",
-                        "|".blue().bold(),
-                        " ".repeat(column - 1),
-                        "^".repeat(1).red().bold()
-                    ));
-                }
-            }
-            for child in &msg.children {
-                let child_color = match child.level.as_str() {
-                    "note" => "note".blue().bold(),
-                    _ => "info".normal(),
-                };
-                result.push_str(&format!("  = {}: {}\n", child_color, child.message));
-            }
-        }
-        result
-    }*/
-
     pub fn format_error_string(&self, file: &str, source_code: &str) -> String {
         let mut result = String::new();
         for msg in &self.messages {

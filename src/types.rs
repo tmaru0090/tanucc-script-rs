@@ -45,8 +45,8 @@ pub enum TokenType {
     Number,                                    // 数値
     LeftParen,                                 // 左括弧
     RightParen,                                // 右括弧
-    RightCurlyBrace,                           // 左波括弧
-    LeftCurlyBrace,                            // 右波括弧
+    RightCurlyBrace,                           // 右波括弧
+    LeftCurlyBrace,                            // 左波括弧
     LeftSquareBrace,                           // 左鍵括弧
     RightSquareBrace,                          // 右鍵括弧
     Conma,                                     // コンマ
@@ -161,9 +161,108 @@ pub enum NodeValue {
     Use(String, Box<Node>),                                       // インポート宣言
     MemberAccess(Box<Node>, Box<Node>),                           // メンバアクセス演算子
     UserSyntax(String, Box<Node>),                                // ユーザー定義構文(構文名,構文)
-    EndStatement,                                                 // ステートメントの終わり
-    Null,                                                         // 値なし
-    Unknown,                                                      // 不明な値(通常到達はしない値)
+    StructInstance(String, Vec<(String, Box<Node>)>), // 構造体インスタンス(構造体名,フィールド値のリスト(名前,値))
+    EndStatement,                                     // ステートメントの終わり
+    Null,                                             // 値なし
+    Unknown,                                          // 不明な値(通常到達はしない値)
+}
+
+#[cfg(any(feature = "full", feature = "decoder"))]
+#[derive(Debug, Clone)]
+pub enum SystemValueTuple {
+    Tuple1(Box<SystemValue>),
+    Tuple2(Box<SystemValue>, Box<SystemValue>),
+    Tuple3(Box<SystemValue>, Box<SystemValue>, Box<SystemValue>),
+    Tuple4(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple5(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple6(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple7(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple8(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple9(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple10(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple11(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
+    Tuple12(
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+        Box<SystemValue>,
+    ),
 }
 
 #[cfg(any(feature = "full", feature = "decoder"))]
@@ -184,10 +283,10 @@ pub enum SystemValue {
     Bool(bool),
     Array(Vec<SystemValue>),
     Pointer(Box<SystemValue>),
-    Tuple(Vec<SystemValue>),
+    Tuple(Box<SystemValueTuple>),
+    Struct(Vec<SystemValue>),
     Null,
 }
-
 // デフォルト値(デフォルト値はNull)
 #[cfg(any(feature = "full", feature = "parser"))]
 impl Default for NodeValue {

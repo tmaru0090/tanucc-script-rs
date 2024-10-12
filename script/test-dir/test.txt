@@ -1,4 +1,4 @@
 -- script info --
 file: example/main.sc
-line: 5
+line: 12
 column: 27
