@@ -21,6 +21,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::to_string_pretty;
 use serde_json::{Number, Value};
 use std::any::Any;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -30,6 +31,7 @@ use std::io::BufReader;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::ops::{Add, Div, Mul, Sub};
 use std::process::{Command, Output};
+use std::rc::Rc;
 use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
@@ -46,6 +48,7 @@ use win_msgbox::{
     AbortRetryIgnore, CancelTryAgainContinue, Icon, MessageBox, Okay, OkayCancel, RetryCancel,
     YesNo, YesNoCancel,
 };
+
 fn get_duration(file_path: &str) -> Option<Duration> {
     // ファイルを開く
     let file = File::open(file_path).ok()?;
@@ -712,6 +715,30 @@ impl Decoder {
                 self.register_system_all_functions();
             }
         }
+        /*
+                for (file_name, node) in ast_map_clone.iter() {
+                    if evaluated_files.contains(file_name) {
+                        continue; // 既に評価済みのファイルはスキップ
+                    }
+                    evaluated_files.insert(file_name.clone());
+
+                    self.current_node = Some((file_name.clone(), Box::new(Node::default())));
+                    let content = std::fs::read_to_string(file_name.clone()).map_err(|e| e.to_string())?;
+                    self.file_contents.insert(file_name.clone(), content);
+
+                    // Nodeのイテレータを使用してノードを処理
+                    for current_node in node.iter() {
+                        self.current_node = Some((file_name.clone(), Box::new(current_node.clone())));
+                        if let NodeValue::EndStatement | NodeValue::Null = current_node.value {
+                            continue;
+                        }
+                        value = self.execute_node(current_node)?;
+                    }
+                    // 最後のノードも評価する（イテレータ内で自動処理されるため不要）
+                }
+        */
+
+        // Nodeのイテレータを使用してノードを処理
         for (file_name, node) in ast_map_clone.iter() {
             if evaluated_files.contains(file_name) {
                 continue; // 既に評価済みのファイルはスキップ
@@ -724,13 +751,13 @@ impl Decoder {
 
             // Nodeのイテレータを使用してノードを処理
             for current_node in node.iter() {
+                let current_node = current_node.borrow(); // 借用して中身にアクセス
                 self.current_node = Some((file_name.clone(), Box::new(current_node.clone())));
                 if let NodeValue::EndStatement | NodeValue::Null = current_node.value {
                     continue;
                 }
-                value = self.execute_node(current_node)?;
+                value = self.execute_node(&*current_node)?; // 修正: 借用を渡す
             }
-            // 最後のノードも評価する（イテレータ内で自動処理されるため不要）
         }
 
         // メインエントリーが定義されていたら実行
@@ -738,10 +765,11 @@ impl Decoder {
             self.add_ast_from_text("main-entry", &format!("{}();", self.entry_func.1))?;
             if let Some((_, value_node)) = self.ast_map.clone().iter().last() {
                 for current_node in value_node.iter() {
+                    let current_node = current_node.borrow(); // 借用して中身にアクセス
                     if let NodeValue::EndStatement | NodeValue::Null = current_node.value {
                         continue;
                     }
-                    value = self.execute_node(current_node)?;
+                    value = self.execute_node(&*current_node)?; // 修正: 借用を渡す
                 }
             }
         }
@@ -749,13 +777,14 @@ impl Decoder {
         self.current_node = original_node;
 
         if self.generated_ast_file {
-            // ディレクトリが存在しない場合は作成
-            std::fs::create_dir_all("./script-analysis").map_err(|e| e.to_string())?;
-            // IndexMapをHashMapに変換
-            let ast_map: std::collections::HashMap<_, _> =
-                self.ast_map.clone().into_iter().collect();
-            let ast_json = serde_json::to_string_pretty(&ast_map).map_err(|e| e.to_string())?;
-            std::fs::write("./script-analysis/ast.json", ast_json).map_err(|e| e.to_string())?;
+            /*   // ディレクトリが存在しない場合は作成
+                std::fs::create_dir_all("./script-analysis").map_err(|e| e.to_string())?;
+                // IndexMapをHashMapに変換
+                let ast_map: std::collections::HashMap<_, _> =
+                    self.ast_map.clone().into_iter().collect();
+                let ast_json = serde_json::to_string_pretty(&ast_map).map_err(|e| e.to_string())?;
+                std::fs::write("./script-analysis/ast.json", ast_json).map_err(|e| e.to_string())?;
+            */
         }
         if self.generated_doc {
             let html_doc = self.generate_html_from_comments();
@@ -771,7 +800,7 @@ impl Decoder {
         }
         Ok(value)
     }
-
+    /*
     fn eval_block(&mut self, block: &Vec<Box<Node>>) -> Result<SystemValue, String> {
         let mut result = SystemValue::Null;
         let initial_local_context = self.context.local_context.clone(); // 現在のローカルコンテキストを保存
@@ -795,6 +824,34 @@ impl Decoder {
         self.context.local_context = initial_local_context;
         Ok(result)
     }
+    */
+
+    fn eval_block(&mut self, block: &Vec<Box<Node>>) -> Result<SystemValue, String> {
+        let mut result = SystemValue::Null;
+        let initial_local_context = self.context.local_context.clone(); // 現在のローカルコンテキストを保存
+
+        for _b in block {
+            for b in _b.iter() {
+                let b = b.borrow(); // Rc<RefCell<Node>>の借用を取得
+
+                // ノードを評価
+                result = self.execute_node(&*b)?; // 借用を渡す
+                                                  // return 文が評価された場合、ブロックの評価を終了
+                if let NodeValue::ControlFlow(ControlFlow::Return(_)) = b.value() {
+                    break;
+                }
+                // EndStatementがある場合に処理を中断していないか確認
+                if let NodeValue::EndStatement = b.value() {
+                    continue; // EndStatementは単なる区切りなので、次のノードの評価を続行
+                }
+            }
+        }
+
+        // ブロックの処理が終わったらローカルコンテキストを元に戻す
+        self.context.local_context = initial_local_context;
+        Ok(result)
+    }
+    /*
     fn eval_include(&mut self, file_name: &String) -> Result<SystemValue, String> {
         self.add_first_ast_from_file(file_name)?;
         let ast_map = self.ast_map.clone();
@@ -802,9 +859,26 @@ impl Decoder {
         let mut result = SystemValue::Null;
         let mut current_node = _node.clone();
         self.current_node = Some((file_name.clone(), _node.clone()));
-        for node in current_node.iter() {
+        for node in current_node.iter(){
             result = self.execute_node(&node)?;
         }
+        Ok(result)
+    }
+    */
+
+    fn eval_include(&mut self, file_name: &String) -> Result<SystemValue, String> {
+        self.add_first_ast_from_file(file_name)?;
+        let ast_map = self.ast_map.clone();
+        let _node = ast_map.get(file_name).unwrap();
+        let mut result = SystemValue::Null;
+        let mut current_node = _node.clone();
+        self.current_node = Some((file_name.clone(), _node.clone()));
+
+        for node in current_node.iter() {
+            let node = node.borrow(); // Rc<RefCell<Node>>の借用を取得
+            result = self.execute_node(&*node)?; // 借用を渡す
+        }
+
         Ok(result)
     }
     fn eval_single_comment(
@@ -830,6 +904,40 @@ impl Decoder {
         debug!("MultiComment added at line {}, column {}", lines.0, lines.1);
         Ok(result)
     }
+    /*
+        fn eval_array(
+            &mut self,
+            data_type: &Box<Node>,
+            values: &Vec<Box<Node>>,
+        ) -> Result<SystemValue, String> {
+            // 型を評価
+            let v_type = match data_type.value {
+                NodeValue::DataType(ref d) => self.execute_node(&Node {
+                    value: NodeValue::DataType(d.clone()),
+                    ..Node::default()
+                })?,
+                _ => SystemValue::Null,
+            };
+
+            // 各値を評価し、型チェックを行う
+            let mut array = Vec::new();
+            for _value in values {
+                for value in _value.iter() {
+                    let v_value = self.execute_node(&*value)?;
+                    if v_value == SystemValue::Null {
+                        continue;
+                    }
+                    //self.check_type(&v_value, v_type.as_str().unwrap_or(""))?;
+                    array.push(SystemValue::Pointer(Box::new(v_value)));
+                }
+            }
+
+            // 配列全体をヒープにコピー
+            self.memory_mgr.allocate(array.clone());
+            // 結果を返す
+            Ok(SystemValue::Array(array.clone()))
+        }
+    */
 
     fn eval_array(
         &mut self,
@@ -848,12 +956,13 @@ impl Decoder {
         // 各値を評価し、型チェックを行う
         let mut array = Vec::new();
         for _value in values {
+            // _valueはBox<Node>なので、borrow()は不要
             for value in _value.iter() {
-                let v_value = self.execute_node(&*value)?;
+                let value_borrowed = value.borrow(); // Rc<RefCell<Node>>の借用を取得
+                let v_value = self.execute_node(&*value_borrowed)?; // 借用を渡す
                 if v_value == SystemValue::Null {
                     continue;
                 }
-                //self.check_type(&v_value, v_type.as_str().unwrap_or(""))?;
                 array.push(SystemValue::Pointer(Box::new(v_value)));
             }
         }
@@ -861,8 +970,9 @@ impl Decoder {
         // 配列全体をヒープにコピー
         self.memory_mgr.allocate(array.clone());
         // 結果を返す
-        Ok(SystemValue::Array(array.clone()))
+        Ok(SystemValue::Array(array))
     }
+
     fn eval_assign(
         &mut self,
         node: &Node,
@@ -1073,6 +1183,46 @@ impl Decoder {
         );
         Ok(SystemValue::Null)
     }
+    fn __system_fn_syntax<'a>(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+        if args.len() != 2 {
+            return Err("syntax expects 2 arguments".into());
+        }
+        let syntax_name = match args[0].value {
+            NodeValue::DataType(DataType::String(ref v)) => v.clone(),
+            _ => String::new(),
+        };
+        let format = match args[1].value {
+            NodeValue::DataType(DataType::String(ref v)) => v.clone(),
+            _ => String::new(),
+        };
+        let mut content = String::new();
+        let line = node.line();
+        let column = node.column();
+        let syntax_node = Box::new(Node::new(
+            NodeValue::DataType(DataType::String(format.clone())),
+            None,
+            line,
+            column,
+        ));
+        let user_syntax =
+            Parser::<'a>::new_user_syntax(syntax_name.clone(), syntax_node.clone(), line, column);
+
+        if let Some((last_key, mut last_value)) = self.ast_map.pop() {
+            if let Some(mut _node) = last_value.iter_mut().next() {
+                _node.borrow_mut().next = Rc::new(RefCell::new(Some(user_syntax.clone())));
+
+                // 借用してBoxに変換
+                let node_box = Box::new(_node.borrow().clone()); // _nodeを借用し、clone()で新しいBoxを作成
+                self.ast_map.insert(last_key, node_box); // Boxを挿入
+            }
+        }
+
+        debug!("Syntax registered: {:?}", user_syntax.clone());
+        debug!("current_node: {:?}", self.current_node());
+        debug!("new ast_maps: {:?}", self.ast_map.clone());
+        return Ok(SystemValue::Null);
+    }
+
     fn __system_fn_line(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
         if !args.is_empty() {
             return Err("line expects no arguments".into());
@@ -1355,8 +1505,10 @@ impl Decoder {
             Decoder::__system_fn_system_function_lists,
         );
         self.system_functions
+            .insert("syntax".to_string(), Decoder::__system_fn_syntax);
+        self.system_functions
             .insert("line".to_string(), Decoder::__system_fn_line);
-     self.system_functions
+        self.system_functions
             .insert("file".to_string(), Decoder::__system_fn_file);
         self.system_functions
             .insert("column".to_string(), Decoder::__system_fn_column);
@@ -2201,8 +2353,8 @@ impl Decoder {
         if let SystemValue::Bool(value) = condition_result {
             if value {
                 result = self.execute_node(&body)?;
-            } else if let Some(ref next_node) = condition.next {
-                match next_node.value {
+            } else if let Some(ref next_node) = condition.next.borrow().as_ref() {
+                match (*next_node).value {
                     NodeValue::ControlFlow(ControlFlow::If(ref next_condition, ref next_body)) => {
                         result = self.eval_if_statement(next_condition, next_body)?;
                     }

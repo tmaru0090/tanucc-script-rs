@@ -10,7 +10,7 @@ pub static RESERVED_WORDS: &[&str] = &[
 use crate::parser::syntax::Node;
 use serde::{Deserialize, Serialize};
 // トークンの種類
-#[derive(PartialEq, Debug, Clone, Serialize)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum TokenType {
     Add,                                       // 加算
     Sub,                                       // 減算
@@ -66,7 +66,7 @@ pub enum TokenType {
 }
 // 制御構造
 #[cfg(any(feature = "full", feature = "parser"))]
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum ControlFlow {
     If(Box<Node>, Box<Node>),             // if文(条件,ボディ)
     Else(Box<Node>),                      // else文(ボディ)
@@ -80,7 +80,7 @@ pub enum ControlFlow {
 }
 
 #[cfg(any(feature = "full", feature = "parser"))]
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Operator {
     Eq(Box<Node>, Box<Node>),               // 等価(左辺,右辺)
     Ne(Box<Node>, Box<Node>),               // 不等価(左辺,右辺)
@@ -116,7 +116,7 @@ pub enum Operator {
 
 // 基本型
 #[cfg(any(feature = "full", feature = "parser"))]
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum DataType {
     Int(i64),                         // 数値型(64bit整数値)
     Float(f64),                       // 浮動小数点型(64bit小数値)
@@ -129,7 +129,7 @@ pub enum DataType {
 
 // 定義
 #[cfg(any(feature = "full", feature = "parser"))]
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Declaration {
     Variable(Box<Node>, Box<Node>, Box<Node>, bool, bool), // 変数定義()
     Struct(String, Vec<Box<Node>>),                        // 構造体定義()
@@ -142,7 +142,7 @@ pub enum Declaration {
 
 // NodeValue
 #[cfg(any(feature = "full", feature = "parser"))]
-#[derive(PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum NodeValue {
     ControlFlow(ControlFlow),                                     // 制御フロー
     Operator(Operator),                                           // 演算子
@@ -160,13 +160,14 @@ pub enum NodeValue {
     ModDeclaration(String, Vec<Box<Node>>),                       // モジュール定義
     Use(String, Box<Node>),                                       // インポート宣言
     MemberAccess(Box<Node>, Box<Node>),                           // メンバアクセス演算子
+    UserSyntax(String, Box<Node>),                                // ユーザー定義構文(構文名,構文)
     EndStatement,                                                 // ステートメントの終わり
     Null,                                                         // 値なし
     Unknown,                                                      // 不明な値(通常到達はしない値)
 }
 
 #[cfg(any(feature = "full", feature = "decoder"))]
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub enum SystemValue {
     Usize(usize),
     U8(u8),

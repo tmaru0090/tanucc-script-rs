@@ -1,9 +1,12 @@
 use crate::parser::syntax::Node;
 use crate::types::*;
+use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::fmt;
 use std::mem;
 use std::ops::{Add, BitAnd, BitOr, BitXor, Div, Mul, Not, Shl, Shr, Sub};
+use std::rc::Rc;
+
 pub trait Size {
     fn size(&self) -> usize;
 }
@@ -38,6 +41,144 @@ impl Size for SystemValue {
     }
 }
 
+#[cfg(any(feature = "full", feature = "decoder"))]
+impl From<Rc<RefCell<Node>>> for SystemValue {
+    fn from(node: Rc<RefCell<Node>>) -> Self {
+        let node = node.borrow(); // 借用して中身を取得
+
+        match &*node {
+            // 借用したノードを参照
+            Node {
+                value: NodeValue::ControlFlow(ControlFlow::Return(ref return_node)),
+                ..
+            } => return_node.clone().into(),
+            Node {
+                value: NodeValue::Variable(_, ref name, _, _, _),
+                ..
+            } => SystemValue::String(name.clone()),
+            Node {
+                value: NodeValue::DataType(DataType::String(ref value)),
+                ..
+            } => SystemValue::String(value.clone()),
+            Node {
+                value: NodeValue::DataType(DataType::Int(ref value)),
+                ..
+            } => {
+                let int_value = *value;
+                if int_value >= 0 {
+                    // 符号なしに変換
+                    if int_value <= u8::MAX as i64 {
+                        SystemValue::U8(int_value as u8)
+                    } else if int_value <= u16::MAX as i64 {
+                        SystemValue::U16(int_value as u16)
+                    } else if int_value <= u32::MAX as i64 {
+                        SystemValue::U32(int_value as u32)
+                    } else if int_value <= usize::MAX as i64 {
+                        SystemValue::Usize(int_value as usize)
+                    } else {
+                        SystemValue::I64(int_value)
+                    }
+                } else {
+                    // 符号ありに変換
+                    if int_value >= i8::MIN as i64 && int_value <= i8::MAX as i64 {
+                        SystemValue::I8(int_value as i8)
+                    } else if int_value >= i16::MIN as i64 && int_value <= i16::MAX as i64 {
+                        SystemValue::I16(int_value as i16)
+                    } else if int_value >= i32::MIN as i64 && int_value <= i32::MAX as i64 {
+                        SystemValue::I32(int_value as i32)
+                    } else {
+                        SystemValue::I64(int_value)
+                    }
+                }
+            }
+            Node {
+                value: NodeValue::DataType(DataType::Float(ref value)),
+                ..
+            } => {
+                let float_value = *value;
+                if float_value >= f32::MIN as f64 && float_value <= f32::MAX as f64 {
+                    SystemValue::F32(float_value as f32)
+                } else {
+                    SystemValue::F64(float_value)
+                }
+            }
+            Node {
+                value: NodeValue::DataType(DataType::Bool(ref value)),
+                ..
+            } => SystemValue::Bool(value.clone()),
+            Node {
+                value: NodeValue::DataType(DataType::Array(ref data_type, ref value)),
+                ..
+            } => {
+                let mut vec: Vec<SystemValue> = vec![];
+                for v in value {
+                    let array_value = match **v {
+                        Node {
+                            value: NodeValue::Variable(_, ref name, _, _, _),
+                            ..
+                        } => SystemValue::String(name.clone()),
+                        Node {
+                            value: NodeValue::DataType(DataType::String(ref value)),
+                            ..
+                        } => SystemValue::String(value.clone()),
+                        Node {
+                            value: NodeValue::DataType(DataType::Int(ref value)),
+                            ..
+                        } => {
+                            let int_value = *value;
+                            if int_value >= 0 {
+                                if int_value <= u8::MAX as i64 {
+                                    SystemValue::U8(int_value as u8)
+                                } else if int_value <= u16::MAX as i64 {
+                                    SystemValue::U16(int_value as u16)
+                                } else if int_value <= u32::MAX as i64 {
+                                    SystemValue::U32(int_value as u32)
+                                } else if int_value <= usize::MAX as i64 {
+                                    SystemValue::Usize(int_value as usize)
+                                } else {
+                                    SystemValue::I64(int_value)
+                                }
+                            } else {
+                                if int_value >= i8::MIN as i64 && int_value <= i8::MAX as i64 {
+                                    SystemValue::I8(int_value as i8)
+                                } else if int_value >= i16::MIN as i64
+                                    && int_value <= i16::MAX as i64
+                                {
+                                    SystemValue::I16(int_value as i16)
+                                } else if int_value >= i32::MIN as i64
+                                    && int_value <= i32::MAX as i64
+                                {
+                                    SystemValue::I32(int_value as i32)
+                                } else {
+                                    SystemValue::I64(int_value)
+                                }
+                            }
+                        }
+                        Node {
+                            value: NodeValue::DataType(DataType::Float(ref value)),
+                            ..
+                        } => {
+                            let float_value = *value;
+                            if float_value >= f32::MIN as f64 && float_value <= f32::MAX as f64 {
+                                SystemValue::F32(float_value as f32)
+                            } else {
+                                SystemValue::F64(float_value)
+                            }
+                        }
+                        Node {
+                            value: NodeValue::DataType(DataType::Bool(ref value)),
+                            ..
+                        } => SystemValue::Bool(value.clone()),
+                        _ => SystemValue::Null,
+                    };
+                    vec.push(SystemValue::Pointer(Box::new(array_value)));
+                }
+                SystemValue::Array(vec)
+            }
+            _ => SystemValue::Null,
+        }
+    }
+}
 #[cfg(any(feature = "full", feature = "decoder"))]
 impl From<Box<Node>> for SystemValue {
     fn from(node: Box<Node>) -> Self {

@@ -50,6 +50,11 @@ fn all_default_run() {
         } else {
             Box::new(Node::default())
         };
+        /*
+        let mut parser = Parser::new(&tokens, "example/main.sc", contents.clone());
+        let nodes = parser.parse_single_statement().unwrap();
+        */
+
         debug!("nodes: {:?}", nodes.clone());
         let mut decoder = Decoder::load_scriptd("example/main.sc", &nodes)
             .unwrap_or_else(|e| {

@@ -7,13 +7,15 @@ use anyhow::{anyhow, Context, Result as R};
 use log::{debug, error, info};
 use property_rs::Property;
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, PartialEq, Clone, Property, Serialize, Deserialize)]
+use std::cell::RefCell;
+use std::rc::Rc;
+#[derive(Debug, PartialEq, Clone, Property)]
 pub struct Node {
     #[property(get)]
     pub value: NodeValue,
-    #[property(get, set)]
-    pub next: Option<Box<Node>>,
+    #[property(get)]
+    //pub next: Option<Box<Node>>,
+    pub next: Rc<RefCell<Option<Box<Node>>>>,
     #[property(get)]
     pub line: usize,
     #[property(get)]
@@ -21,6 +23,7 @@ pub struct Node {
     #[property(get)]
     pub is_statement: bool,
 }
+/*
 pub struct NodeIter<'a> {
     current: Option<&'a Node>,
 }
@@ -30,7 +33,7 @@ impl<'a> Iterator for NodeIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(node) = self.current {
-            self.current = node.next.as_deref();
+            self.current = node.next.borrow().as_deref();
             Some(node)
         } else {
             None
@@ -38,40 +41,123 @@ impl<'a> Iterator for NodeIter<'a> {
     }
 }
 
-impl Node {
-    pub fn iter(&self) -> NodeIter {
+
+impl<'a> NodeIter<'a> {
+    pub fn new(node: &'a Node) -> Self {
         NodeIter {
-            current: Some(self),
+            current: Some(node),
         }
     }
 }
+
+impl Node {
+    pub fn iter(&self) -> NodeIter {
+        NodeIter::new(self)
+    }
+}
+*/
+
+pub struct NodeIter {
+    current: Option<Rc<RefCell<Node>>>,
+}
+
+impl Iterator for NodeIter {
+    type Item = Rc<RefCell<Node>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(node) = self.current.take() {
+            // nextフィールドからOption<Box<Node>>を取り出す
+            if let Some(next_node) = node.borrow().next.borrow().as_ref() {
+                self.current = Some(Rc::new(RefCell::new(*next_node.clone()))); // Box<Node>をRc<RefCell<Node>>に変換
+            } else {
+                self.current = None; // 次のノードがない場合
+            }
+            Some(node)
+        } else {
+            None
+        }
+    }
+}
+impl NodeIter {
+    pub fn new(node: Rc<RefCell<Node>>) -> Self {
+        NodeIter {
+            current: Some(node),
+        }
+    }
+}
+
+pub struct NodeIterMut {
+    current: Option<Rc<RefCell<Node>>>,
+}
+
+impl Iterator for NodeIterMut {
+    type Item = Rc<RefCell<Node>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(node) = self.current.take() {
+            // nextフィールドからOption<Box<Node>>を取り出す
+            if let Some(next_node) = node.borrow_mut().next.borrow_mut().as_ref() {
+                self.current = Some(Rc::new(RefCell::new(*(next_node).clone())));
+            // Box<Node>をRc<RefCell<Node>>に変換
+            } else {
+                self.current = None; // 次のノードがない場合
+            }
+            Some(node)
+        } else {
+            None
+        }
+    }
+}
+
+impl NodeIterMut {
+    pub fn new(node: Rc<RefCell<Node>>) -> Self {
+        NodeIterMut {
+            current: Some(node),
+        }
+    }
+}
+
+impl Node {
+    pub fn iter_mut(&self) -> NodeIterMut {
+        NodeIterMut::new(Rc::new(RefCell::new(self.clone()))) // ここを変更
+    }
+}
+impl Node {
+    pub fn iter(&self) -> NodeIter {
+        NodeIter::new(Rc::new(RefCell::new(self.clone()))) // ここを変更
+    }
+}
+
 impl Default for Node {
     fn default() -> Self {
         Node {
             value: NodeValue::default(),
-            next: None,
+            next: Rc::new(RefCell::new(None)), // Rc<RefCell<Option<Box<Node>>>>として初期化
             line: 0,
             column: 0,
             is_statement: false,
         }
     }
 }
-
 impl Node {
     pub fn new(value: NodeValue, next: Option<Box<Node>>, line: usize, column: usize) -> Self {
         Node {
             value,
-            next,
+            next: Rc::new(RefCell::new(next)), // nextをRc<RefCell<Option<Box<Node>>>>として初期化
             line,
             column,
             is_statement: false,
         }
     }
+
     pub fn is_next(&self) -> bool {
-        self.next.is_some()
+        // Refを借りて中身のOptionを確認する
+        self.next.borrow().is_some()
+    }
+    pub fn set_next(&self, next: Rc<RefCell<Option<Box<Node>>>>) {
+        *self.next.borrow_mut() = Some(next.borrow().clone().unwrap());
     }
 }
-
 #[derive(Debug, Clone)]
 pub struct Parser<'a> {
     input_content: String,
@@ -179,6 +265,15 @@ impl<'a> Parser<'a> {
 
     pub fn new_unit(line: usize, column: usize) -> Box<Node> {
         let node = Node::new(NodeValue::DataType(DataType::Unit(())), None, line, column);
+        Box::new(node)
+    }
+    pub fn new_user_syntax(
+        name: String,
+        syntax: Box<Node>,
+        line: usize,
+        column: usize,
+    ) -> Box<Node> {
+        let node = Node::new(NodeValue::UserSyntax(name, syntax), None, line, column);
         Box::new(node)
     }
 
@@ -674,9 +769,10 @@ impl<'a> Parser<'a> {
         if self.current_token().unwrap().token_type() == TokenType::Semi {
             self.is_statement = true;
         }
+
         Ok(Box::new(Node {
             value: NodeValue::Call(token.token_value().clone(), args, is_system),
-            next: None,
+            next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>として初期化
             line: self.current_token().unwrap().line(),
             column: self.current_token().unwrap().column(),
             is_statement: self.is_statement,
@@ -898,7 +994,7 @@ impl<'a> Parser<'a> {
 
         let mut if_node = Node {
             value: NodeValue::ControlFlow(ControlFlow::If(Box::new(*condition), Box::new(*body))),
-            next: None,
+            next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>として初期化
             line: self.current_token().unwrap().line(),
             column: self.current_token().unwrap().column(),
             is_statement: true,
@@ -913,24 +1009,25 @@ impl<'a> Parser<'a> {
                         // 'else if' の処理
                         self.next_token(); // 'if' をスキップ
                         let else_if_node = self.parse_if_statement()?;
-                        if_node.next = Some(else_if_node);
+                        // Rc<RefCell<Option<Box<Node>>>>に次のノードを設定
+                        *if_node.next.borrow_mut() = Some(else_if_node);
                     } else {
                         // 'else' の処理
                         self.next_token(); // { をスキップ
                         let else_body = self.parse_block()?;
                         let else_node = Node {
                             value: NodeValue::ControlFlow(ControlFlow::Else(Box::new(*else_body))),
-                            next: None,
+                            next: Rc::new(RefCell::new(None)), // nextを初期化
                             line: self.current_token().unwrap().line(),
                             column: self.current_token().unwrap().column(),
                             is_statement: true,
                         };
-                        if_node.next = Some(Box::new(else_node));
+                        // Rc<RefCell<Option<Box<Node>>>>に次のノードを設定
+                        *if_node.next.borrow_mut() = Some(Box::new(else_node));
                     }
                 }
             }
         }
-
         Ok(Box::new(if_node))
     }
 
@@ -1103,6 +1200,7 @@ impl<'a> Parser<'a> {
         self.next_token(); // name
         self.next_token(); // =
         let value_node = self.expr()?;
+
         Ok(Box::new(Node {
             value: NodeValue::Declaration(Declaration::Type(
                 Box::new(Node::new(
@@ -1122,13 +1220,12 @@ impl<'a> Parser<'a> {
                 )),
                 value_node,
             )),
-            next: None,
+            next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
             line: self.current_token().unwrap().line(),
             column: self.current_token().unwrap().column(),
             is_statement: self.is_statement,
         }))
     }
-
     fn parse_variable_declaration(&mut self) -> R<Box<Node>, String> {
         self.next_token();
         let mut is_mutable = false;
@@ -1171,6 +1268,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
             }
+
             return Ok(Box::new(Node {
                 value: NodeValue::Declaration(Declaration::Variable(
                     Box::new(Node::new(
@@ -1193,7 +1291,7 @@ impl<'a> Parser<'a> {
                     is_local,
                     is_mutable,
                 )),
-                next: None,
+                next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
                 column: self.current_token().unwrap().column(),
                 is_statement: self.is_statement,
@@ -1218,6 +1316,7 @@ impl<'a> Parser<'a> {
                     break;
                 }
             }
+
             return Ok(Box::new(Node {
                 value: NodeValue::Declaration(Declaration::Variable(
                     Box::new(Node::new(
@@ -1240,7 +1339,7 @@ impl<'a> Parser<'a> {
                     is_local,
                     is_mutable,
                 )),
-                next: None,
+                next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
                 column: self.current_token().unwrap().column(),
                 is_statement: self.is_statement,
@@ -1263,7 +1362,8 @@ impl<'a> Parser<'a> {
                 break;
             }
         }
-        Ok(Box::new(Node {
+
+        return Ok(Box::new(Node {
             value: NodeValue::Declaration(Declaration::Variable(
                 Box::new(Node::new(
                     NodeValue::Variable(
@@ -1285,11 +1385,11 @@ impl<'a> Parser<'a> {
                 is_local,
                 is_mutable,
             )),
-            next: None,
+            next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
             line: self.current_token().unwrap().line(),
             column: self.current_token().unwrap().column(),
             is_statement: self.is_statement,
-        }))
+        }));
     }
 
     fn parse_array(&mut self, data_type: &Box<Node>) -> R<Box<Node>, String> {
@@ -1334,6 +1434,7 @@ impl<'a> Parser<'a> {
             self.next_token(); // =
 
             value_node = self.expr()?;
+
             Ok(Box::new(Node {
                 value: NodeValue::Assign(
                     Box::new(Node::new(
@@ -1354,7 +1455,7 @@ impl<'a> Parser<'a> {
                     value_node,
                     index,
                 ),
-                next: None,
+                next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
                 column: self.current_token().unwrap().column(),
                 is_statement: self.is_statement,
@@ -1387,7 +1488,7 @@ impl<'a> Parser<'a> {
                     value_node,
                     index,
                 ),
-                next: None,
+                next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
                 column: self.current_token().unwrap().column(),
                 is_statement: self.is_statement,
@@ -1402,7 +1503,7 @@ impl<'a> Parser<'a> {
 
         Ok(Box::new(Node {
             value: NodeValue::ControlFlow(ControlFlow::Return(ret_value)),
-            next: None,
+            next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
             line: self.current_token().unwrap().line(),
             column: self.current_token().unwrap().column(),
             is_statement: self.is_statement,
@@ -1557,7 +1658,7 @@ impl<'a> Parser<'a> {
     fn parse_primitive_type(&mut self, token: &Token) -> R<Box<Node>, String> {
         Ok(Box::new(Node::default()))
     }
-    fn parse_single_statement(&mut self) -> Option<R<Box<Node>, String>> {
+    pub fn parse_single_statement(&mut self) -> Option<R<Box<Node>, String>> {
         let result = if self.current_token().unwrap().token_value() == "callback" {
             self.parse_callback_function_definition()
         } else if self.current_token().unwrap().token_value() == "struct" {
@@ -1630,7 +1731,7 @@ impl<'a> Parser<'a> {
 
         Some(result)
     }
-
+    /*
     fn parse_statement(&mut self) -> R<Box<Node>, String> {
         self.parse_statement_recursive(None)
     }
@@ -1661,6 +1762,51 @@ impl<'a> Parser<'a> {
         } else {
             Err("Failed to parse statement".to_string())
         }
+    }
+    pub fn parse(&mut self) -> R<Box<Node>, String> {
+        self.parse_statement()
+    };*/
+
+    fn parse_statement_recursive(
+        &mut self,
+        previous_node: Option<Box<Node>>,
+    ) -> R<Box<Node>, String> {
+        if self.current_token().unwrap().token_type() == TokenType::Eof
+            || self.current_token().unwrap().token_type() == TokenType::RightCurlyBrace
+        {
+            return previous_node.ok_or("No statements found".to_string());
+        }
+
+        if let Some(statement) = self.parse_single_statement() {
+            let node = statement?;
+            if let Some(prev) = previous_node {
+                // 新しいノードを追加する
+                let mut current_ref = prev.clone(); // クローンを作成
+
+                // 最後のノードまで進む
+                loop {
+                    let next_node = current_ref.next.borrow().clone(); // 次のノードを取得
+                    match next_node {
+                        Some(ref next) => {
+                            current_ref = next.clone(); // 現在のノードを更新
+                        }
+                        None => break, // 次のノードがない場合はループを終了
+                    }
+                }
+
+                // 新しいノードを設定
+                current_ref.set_next(Rc::new(RefCell::new(Some(node.clone()))));
+                self.parse_statement_recursive(Some(prev)) // prevを再利用
+            } else {
+                self.parse_statement_recursive(Some(node))
+            }
+        } else {
+            Err("Failed to parse statement".to_string())
+        }
+    }
+
+    fn parse_statement(&mut self) -> R<Box<Node>, String> {
+        self.parse_statement_recursive(None)
     }
     pub fn parse(&mut self) -> R<Box<Node>, String> {
         self.parse_statement()

@@ -7,7 +7,7 @@ use property_rs::Property;
 use serde::Serialize;
 use std::str::FromStr;
 
-#[derive(Debug, Property, Clone, Serialize)]
+#[derive(Debug, Property, Clone)]
 pub struct Token {
     #[property(get)]
     token_value: String,
