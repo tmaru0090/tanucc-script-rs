@@ -42,8 +42,7 @@ fn all_default_run() {
         let tokens = Lexer::from_tokenize(main_script, contents.clone()).unwrap();
         debug!("tokens: {:?}", tokens.clone());
 
-        let nodes = if let Err(e) = Parser::from_parse(&tokens, main_script, contents.clone())
-        {
+        let nodes = if let Err(e) = Parser::from_parse(&tokens, main_script, contents.clone()) {
             eprintln!("{}", e);
             return;
         } else if let Ok(v) = Parser::from_parse(&tokens, main_script, contents.clone()) {

@@ -1,5 +1,5 @@
 // たぬぅスクリプト[0.1]
-include "std.txt"
+include "example/test"
 {
 
   let b = 0;

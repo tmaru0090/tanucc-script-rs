@@ -48,7 +48,7 @@ use win_msgbox::{
     AbortRetryIgnore, CancelTryAgainContinue, Icon, MessageBox, Okay, OkayCancel, RetryCancel,
     YesNo, YesNoCancel,
 };
-
+use std::path::PathBuf;
 fn get_duration(file_path: &str) -> Option<Duration> {
     // ファイルを開く
     let file = File::open(file_path).ok()?;
@@ -826,14 +826,33 @@ impl Decoder {
         self.context.local_context = initial_local_context;
         Ok(result)
     }
+    
+    /*fn add_extension_if_missing(&self, path: &str, extension: &str) -> PathBuf {
+        let mut path_buf = PathBuf::from(path);
+        if path_buf.extension().is_none() {
+            path_buf.set_extension(extension);
+        }
+        path_buf
+    }*/
+    fn add_extension_if_missing(&self,path: &str, extension: &str) -> PathBuf {
+    let path_buf = PathBuf::from(path);
+    let absolute_path = std::fs::canonicalize(&path_buf).unwrap_or(path_buf);
 
+    let mut path_buf = absolute_path.clone();
+    if path_buf.extension().is_none() {
+        path_buf.set_extension(extension);
+    }
+    path_buf
+}
     fn eval_include(&mut self, file_name: &String) -> Result<SystemValue, String> {
-        self.add_first_ast_from_file(file_name)?;
+        let path = self.add_extension_if_missing(file_name,"txt");
+        self.add_first_ast_from_file(&path.to_string_lossy().into_owned())?;
+        //self.add_first_ast_from_file(file_name)?;
         let ast_map = self.ast_map.clone();
-        let _node = ast_map.get(file_name).unwrap();
+        let _node = ast_map.get(&path.to_string_lossy().into_owned()).unwrap();
         let mut result = SystemValue::Null;
         let mut current_node = _node.clone();
-        self.current_node = Some((file_name.clone(), _node.clone()));
+        self.current_node = Some((path.to_string_lossy().into_owned().clone(), _node.clone()));
 
         for node in current_node.iter() {
             let node = node.borrow(); // Rc<RefCell<Node>>の借用を取得
@@ -1426,11 +1445,39 @@ impl Decoder {
         let lists: Vec<String> = self.system_functions.keys().cloned().collect();
         return Ok(lists.into());
     }
+
+    fn __system_fn_print(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+        if args.is_empty() {
+            return Err("print expects no argument".into());
+        }
+        for arg in args.clone() {
+            let value = self.execute_node(&arg)?;
+            let mut format = format!("{:?}", value);
+            if let SystemValue::String(v) = value.clone() {
+                if v == "\n" {
+                    format.push_str("\n");
+                    continue;
+                }
+                if v == "\t" {
+                    format.push_str("\t");
+                    continue;
+                }
+                if v == "\r" {
+                    format.push_str("\r");
+                    continue;
+                }
+            }
+            print!("{}", format);
+        }
+        return Ok(SystemValue::Null);
+    }
     fn register_system_all_functions(&mut self) {
         self.system_functions.insert(
             "func_lists".to_string(),
             Decoder::__system_fn_system_function_lists,
         );
+        self.system_functions
+            .insert("print".to_string(), Decoder::__system_fn_print);
         self.system_functions
             .insert("syntax".to_string(), Decoder::__system_fn_syntax);
         self.system_functions

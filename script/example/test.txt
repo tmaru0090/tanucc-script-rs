@@ -1,4 +1,4 @@
-include "example/test2.sc"
+include "example/test2"
 /*
 // フィボナッチ
 fn f(n){
