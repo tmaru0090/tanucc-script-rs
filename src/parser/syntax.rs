@@ -606,13 +606,15 @@ impl<'a> Parser<'a> {
                 } else {
                     let ident_token = self.current_token().unwrap().clone();
                     self.next_token();
-                    if self.current_token().unwrap().token_type() == TokenType::LeftCurlyBrace {
-                        node = *self.parse_struct_instance(&ident_token)?;
+                    if self.current_token().unwrap().token_type() == TokenType::LeftParen {
+                        node = *self.parse_function_call(token.clone(), is_system)?;
                         return Ok(Box::new(node));
                     }
 
-                    if self.current_token().unwrap().token_type() == TokenType::LeftParen {
-                        node = *self.parse_function_call(token.clone(), is_system)?;
+                    if self.current_token().unwrap().token_type() == TokenType::LeftCurlyBrace
+                        && self.previous_token(1).unwrap().token_type() != TokenType::RightArrow
+                    {
+                        node = *self.parse_struct_instance(&ident_token)?;
                         return Ok(Box::new(node));
                     }
 
@@ -861,20 +863,26 @@ impl<'a> Parser<'a> {
         );
         while self.current_token().unwrap().token_type() != TokenType::RightParen {
             let arg = self.expr()?;
-            let mut data_type = Parser::<'a>::new_null(
-                self.current_token().unwrap().line(),
-                self.current_token().unwrap().column(),
-            );
+            //debug!("arg: {:?}", arg);
+            let mut data_type = match arg.value().clone() {
+                NodeValue::Variable(ref data_type, _, _, _, _) => data_type.clone(),
+                _ => Parser::<'a>::new_null(
+                    self.current_token().unwrap().line(),
+                    self.current_token().unwrap().column(),
+                ),
+            };
             let arg_name = match arg.value() {
                 NodeValue::Variable(_, ref name, _, _, _) => name.clone(),
                 _ => return Err("Invalid argument name".to_string()),
             };
             args.push((data_type, arg_name));
+
+            //debug!("args: {:?}", args);
             if self.current_token().unwrap().token_type() == TokenType::Conma {
                 self.next_token(); // ',' をスキップ
             }
 
-            debug!("{:?}", self.current_token());
+            //debug!("{:?}", self.current_token());
         }
         self.next_token(); // ')' をスキップ
         if self.current_token().unwrap().token_type() == TokenType::RightArrow {
@@ -1108,9 +1116,23 @@ impl<'a> Parser<'a> {
 
     fn parse_return_type(&mut self) -> R<Box<Node>, String> {
         self.next_token(); // '->' をスキップ
-        let return_type = self.expr()?;
+        let mut return_type = String::new();
+        if self.current_token().unwrap().token_type() == TokenType::LeftParen {
+            self.next_token(); // (
+            self.next_token(); // )
+            return_type = String::from("()");
+            return Ok(Box::new(Node::new(
+                NodeValue::DataType(DataType::String(return_type)),
+                None,
+                self.current_token().unwrap().line(),
+                self.current_token().unwrap().column(),
+            )));
+        }
+
+        return_type = self.current_token().unwrap().token_value().clone();
+        //debug!("{:?}", return_type);
         Ok(Box::new(Node::new(
-            NodeValue::DataType(DataType::from(return_type)),
+            NodeValue::DataType(DataType::String(return_type)),
             None,
             self.current_token().unwrap().line(),
             self.current_token().unwrap().column(),
@@ -1179,12 +1201,11 @@ impl<'a> Parser<'a> {
 
     fn parse_data_type(&mut self) -> R<Box<Node>, String> {
         if self.peek_next_token(1).unwrap().token_type() != TokenType::Eof
-            && self.peek_next_token(1).unwrap().token_type() != TokenType::Conma
             && self.peek_next_token(1).unwrap().token_type() != TokenType::RightCurlyBrace
+            && self.peek_next_token(1).unwrap().token_type() == TokenType::Ident
         {
             self.next_token(); // 変数名 をスキップ
         }
-
         let data_type = self.expr()?;
         Ok(Box::new(Node::new(
             NodeValue::DataType(DataType::from(data_type)),

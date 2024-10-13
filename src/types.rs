@@ -286,6 +286,16 @@ pub enum SystemValue {
     Tuple(Box<SystemValueTuple>),
     Struct(Vec<SystemValue>),
     Null,
+    __NodeBlock(Vec<Box<Node>>),
+}
+impl SystemValue {
+    pub fn push(&mut self, value: SystemValue) {
+        if let SystemValue::Array(ref mut vec) = self {
+            vec.push(value);
+        } else {
+            panic!("push can only be called on SystemValue::Array");
+        }
+    }
 }
 // デフォルト値(デフォルト値はNull)
 #[cfg(any(feature = "full", feature = "parser"))]

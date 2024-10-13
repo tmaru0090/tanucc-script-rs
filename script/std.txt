@@ -34,16 +34,16 @@ struct __UTF8_String{
   value:&str,
 }
 impl __UTF8_String{
-  fn new()->Self{
+  fn new()->__UTF8_String{
     __UTF8_Stirng{
-      value:Default(),  
-    }
+      value:"",  
+  }
 }
 struct String{
     value:&__UTF8_String,
 }
 impl String{
-    fn new()->Self{
+    fn new()->String{
         String{
             value:__UTF8_String::new(),
         }

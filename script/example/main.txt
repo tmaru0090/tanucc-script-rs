@@ -1,8 +1,6 @@
 // たぬぅスクリプト[0.1]
-include "example/test"
-{
-
-  let b = 0;
-  let string = String{};
-  @play_music("test-dir/pokemon-bw-syouri-mokuzen.wav");
+include "std"
+fn main(){
+    let a= 0;
+    a
 }

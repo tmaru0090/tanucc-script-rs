@@ -116,6 +116,8 @@ impl Size for SystemValue {
                 }
             },
             SystemValue::Struct(fields) => fields.iter().map(|v| v.size()).sum(),
+
+            SystemValue::__NodeBlock(nodes) => 0,
         }
     }
 }
@@ -1268,6 +1270,8 @@ impl fmt::Display for SystemValue {
             SystemValue::Struct(_) => {
                 write!(f, "")
             }
+
+            SystemValue::__NodeBlock(nodes) => write!(f, ""),
         }
     }
 }
