@@ -1384,6 +1384,10 @@ impl Decoder {
                         SystemValue::Pointer(v) => {
                             if let SystemValue::String(s) = *v.clone() {
                                 Some(s.clone())
+                            } else if let SystemValue::System(SystemType::PathBuf(ref v)) =
+                                *v.clone()
+                            {
+                                Some(v.to_str().unwrap().to_string())
                             } else {
                                 None
                             }
