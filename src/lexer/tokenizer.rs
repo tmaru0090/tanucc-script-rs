@@ -112,129 +112,6 @@ impl Lexer {
 
             let start_line = self.line();
             let start_column = self.column();
-            /*
-            if c.is_digit(10) || c == '0' {
-                let mut number = String::new();
-                let mut base = 10;
-                let mut has_decimal_point = false;
-                let mut decimal_point_count = 0;
-                let mut dot_flag = false;
-                let mut range_flag = false;
-                if c == '0' {
-                    chars.next();
-                    self.column += 1;
-                    if let Some(&next_char) = chars.peek() {
-                        match next_char {
-                            'b' | 'B' => {
-                                base = 2;
-                                chars.next();
-                                self.column += 1;
-                            }
-                            'o' | 'O' => {
-                                base = 8;
-                                chars.next();
-                                self.column += 1;
-                            }
-                            'x' | 'X' => {
-                                base = 16;
-                                chars.next();
-                                self.column += 1;
-                            }
-                            _ => {
-                                number.push('0');
-                            }
-                        }
-                    } else {
-                        number.push('0');
-                    }
-                }
-
-                while let Some(&c) = chars.peek() {
-                    if c.is_digit(base) {
-                        number.push(c);
-                        chars.next(); // 数字を追加した後に次の文字に進む
-                        self.column += 1;
-                    } else if c == '.' && base == 10 {
-                        chars.next(); // 先に小数点を進める
-                        if let Some(&next_char) = chars.peek() {
-                            if next_char.is_digit(10) {
-                                // 小数点の処理を続行
-                                decimal_point_count += 1;
-                                number.push('.');
-                                has_decimal_point = true;
-                                self.column += 1;
-                            } else if next_char == '.' {
-                                if !dot_flag
-                                    || !range_flag && decimal_point_count < 2 && !number.is_empty()
-                                {
-                                    let value = if has_decimal_point {
-                                        f64::from_str(&number).unwrap()
-                                    } else {
-                                        i64::from_str_radix(&number, base).unwrap() as f64
-                                    };
-                                    tokens.push(Token::new(
-                                        value.to_string(),
-                                        TokenType::Number,
-                                        start_line,
-                                        start_column,
-                                    ));
-                                }
-                                tokens.push(Token::new(
-                                    "..".to_string(),
-                                    TokenType::Range,
-                                    start_line,
-                                    start_column,
-                                ));
-                                self.column += 1;
-                                range_flag = true;
-                                break;
-                            } else {
-                                if !dot_flag
-                                    || !range_flag && decimal_point_count < 2 && !number.is_empty()
-                                {
-                                    let value = if has_decimal_point {
-                                        f64::from_str(&number).unwrap()
-                                    } else {
-                                        i64::from_str_radix(&number, base).unwrap() as f64
-                                    };
-                                    tokens.push(Token::new(
-                                        value.to_string(),
-                                        TokenType::Number,
-                                        start_line,
-                                        start_column,
-                                    ));
-                                }
-                                tokens.push(Token::new(
-                                    ".".to_string(),
-                                    TokenType::Dot,
-                                    start_line,
-                                    start_column,
-                                ));
-
-                                dot_flag = true;
-                                break;
-                            }
-                        }
-                    } else {
-                        break;
-                    }
-                }
-
-                if !dot_flag || !range_flag && decimal_point_count < 2 && !number.is_empty() {
-                    let value = if has_decimal_point {
-                        f64::from_str(&number).unwrap()
-                    } else {
-                        i64::from_str_radix(&number, base).unwrap() as f64
-                    };
-                    tokens.push(Token::new(
-                        value.to_string(),
-                        TokenType::Number,
-                        start_line,
-                        start_column,
-                    ));
-                }
-            }*/
-
             if c.is_digit(10) || c == '0' {
                 let mut number = String::new();
                 let mut base = 10;
@@ -939,6 +816,28 @@ impl Lexer {
                         tokens.push(Token::new(
                             ":".to_string(),
                             TokenType::Colon,
+                            start_line,
+                            start_column,
+                        ));
+                    }
+                }
+            } else if c == '%' {
+                chars.next();
+                self.column += 1;
+                if let Some(&next_char) = chars.peek() {
+                    if next_char == '=' {
+                        tokens.push(Token::new(
+                            "%=".to_string(),
+                            TokenType::ModulusAssign,
+                            start_line,
+                            start_column,
+                        ));
+                        self.column += 1;
+                        chars.next();
+                    } else {
+                        tokens.push(Token::new(
+                            "%".to_string(),
+                            TokenType::Modulus,
                             start_line,
                             start_column,
                         ));

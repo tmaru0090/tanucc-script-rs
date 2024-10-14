@@ -1,3 +1,9 @@
+use libloading::{Library, Symbol};
+use std::fs::File;
+use std::net::TcpStream;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex};
+use std::time::SystemTime;
 // 予約済みキーワード
 pub static RESERVED_WORDS: &[&str] = &[
     "if", "else", "while", "for", "break", "continue", "i32", "i64", "f32", "f64", "u32", "u64",
@@ -18,10 +24,12 @@ pub enum TokenType {
     Div,                                       // 除算
     Increment,                                 // 増加
     Decrement,                                 // 減少
+    Modulus,                                   // 余り
     AddAssign,                                 // 加算代入
     SubAssign,                                 // 減算代入
     MulAssign,                                 // 乗算代入
     DivAssign,                                 // 除算代入
+    ModulusAssign,                             // 余り代入
     Eq,                                        // 等価性
     Ne,                                        // 不等価性
     Lt,                                        // より小さい
@@ -94,12 +102,14 @@ pub enum Operator {
     Sub(Box<Node>, Box<Node>),              // 減算(左辺,右辺)
     Mul(Box<Node>, Box<Node>),              // 乗算(左辺,右辺)
     Div(Box<Node>, Box<Node>),              // 除算(左辺,右辺)
+    Modulus(Box<Node>, Box<Node>),          // 余り(左辺,右辺)
     Increment(Box<Node>),                   // 増加(左辺)
     Decrement(Box<Node>),                   // 減少(左辺)
     AddAssign(Box<Node>, Box<Node>),        // 加算代入(左辺,右辺)
     SubAssign(Box<Node>, Box<Node>),        // 減算代入(左辺,右辺)
     MulAssign(Box<Node>, Box<Node>),        // 乗算代入(左辺,右辺)
     DivAssign(Box<Node>, Box<Node>),        // 除算代入(左辺,右辺)
+    ModulusAssign(Box<Node>, Box<Node>),    // 余り代入(左辺,右辺)
     BitAnd(Box<Node>, Box<Node>),           // ビット単位の論理積(左辺,右辺)
     BitOr(Box<Node>, Box<Node>),            // ビット単位の論理和(左辺,右辺)
     BitXor(Box<Node>, Box<Node>),           // ビット単位の排他的論理和(左辺,右辺)
@@ -125,15 +135,17 @@ pub enum DataType {
     Unit(()),                         // Unit値(())
     Generic(String, Vec<String>),     // ジェネリック型(ジェネリック名,パラメータリスト)
     Array(Box<Node>, Vec<Box<Node>>), // 配列(型名,値)
+    Null,                             // 値なし
 }
 
 // 定義
 #[cfg(any(feature = "full", feature = "parser"))]
 #[derive(PartialEq, Debug, Clone)]
 pub enum Declaration {
+    Const(Box<Node>, Box<Node>, Box<Node>, bool), // 定数定義()
     Variable(Box<Node>, Box<Node>, Box<Node>, bool, bool), // 変数定義()
-    Struct(String, Vec<Box<Node>>),                        // 構造体定義()
-    Impl(String, Vec<Box<Node>>),                          // 構造体実装()
+    Struct(String, Vec<Box<Node>>),               // 構造体定義()
+    Impl(String, Vec<Box<Node>>),                 // 構造体実装()
     Function(String, Vec<(Box<Node>, String)>, Box<Node>, Box<Node>, bool), // 関数定義()
     CallBackFunction(String, Vec<(Box<Node>, String)>, Box<Node>, Box<Node>, bool), // コールバック関数定義()
     Type(Box<Node>, Box<Node>), // 型定義,型エイリアス()
@@ -163,8 +175,9 @@ pub enum NodeValue {
     UserSyntax(String, Box<Node>),                                // ユーザー定義構文(構文名,構文)
     StructInstance(String, Vec<(String, Box<Node>)>), // 構造体インスタンス(構造体名,フィールド値のリスト(名前,値))
     EndStatement,                                     // ステートメントの終わり
-    Null,                                             // 値なし
-    Unknown,                                          // 不明な値(通常到達はしない値)
+    // ここのNullはDataType::Nullに変更するため、消せよ
+    Null,    // 値なし
+    Unknown, // 不明な値(通常到達はしない値)
 }
 
 #[cfg(any(feature = "full", feature = "decoder"))]
@@ -265,7 +278,15 @@ pub enum SystemValueTuple {
     ),
 }
 
-#[cfg(any(feature = "full", feature = "decoder"))]
+#[derive(Debug, Clone)]
+pub enum SystemType {
+    File(Arc<Mutex<File>>),
+    PathBuf(PathBuf),
+    TcpStream(Arc<Mutex<TcpStream>>),
+    SystemTime(SystemTime),
+    Library(Arc<Mutex<Library>>),
+}
+
 #[derive(Debug, Clone)]
 pub enum SystemValue {
     Usize(usize),
@@ -285,8 +306,77 @@ pub enum SystemValue {
     Pointer(Box<SystemValue>),
     Tuple(Box<SystemValueTuple>),
     Struct(Vec<SystemValue>),
+    System(SystemType),
     Null,
     __NodeBlock(Vec<Box<Node>>),
+}
+
+#[macro_export]
+macro_rules! to_sysval {
+    ($struct_name:ident { $($field_name:ident : $field_type:ty),* }) => {
+        impl $struct_name {
+            pub fn to_system_value(&self) -> SystemValue {
+                SystemValue::Struct(vec![
+                    $(
+                        map_field_to_system_value(&self.$field_name)
+                    ),*
+                ])
+            }
+        }
+
+        fn map_field_to_system_value(field: &dyn std::any::Any) -> SystemValue {
+            if let Some(val) = field.downcast_ref::<usize>() {
+                SystemValue::Usize(*val)
+            } else if let Some(val) = field.downcast_ref::<u8>() {
+                SystemValue::U8(*val)
+            } else if let Some(val) = field.downcast_ref::<u16>() {
+                SystemValue::U16(*val)
+            } else if let Some(val) = field.downcast_ref::<u32>() {
+                SystemValue::U32(*val)
+            } else if let Some(val) = field.downcast_ref::<u64>() {
+                SystemValue::U64(*val)
+            } else if let Some(val) = field.downcast_ref::<i8>() {
+                SystemValue::I8(*val)
+            } else if let Some(val) = field.downcast_ref::<i16>() {
+                SystemValue::I16(*val)
+            } else if let Some(val) = field.downcast_ref::<i32>() {
+                SystemValue::I32(*val)
+            } else if let Some(val) = field.downcast_ref::<i64>() {
+                SystemValue::I64(*val)
+            } else if let Some(val) = field.downcast_ref::<f32>() {
+                SystemValue::F32(*val)
+            } else if let Some(val) = field.downcast_ref::<f64>() {
+                SystemValue::F64(*val)
+            } else if let Some(val) = field.downcast_ref::<String>() {
+                SystemValue::String(val.clone())
+            } else if let Some(val) = field.downcast_ref::<bool>() {
+                SystemValue::Bool(*val)
+            } else if let Some(val) = field.downcast_ref::<Vec<SystemValue>>() {
+                SystemValue::Array(val.clone())
+            } else if let Some(val) = field.downcast_ref::<*mut i32>() {
+                unsafe { SystemValue::Pointer(Box::new(SystemValue::I32(**val))) }
+            } else if let Some(val) = field.downcast_ref::<*const i8>() {
+                unsafe {
+                    let c_str = std::ffi::CStr::from_ptr(*val);
+                    SystemValue::String(c_str.to_string_lossy().into_owned())
+                }
+            } else if let Some(val) = field.downcast_ref::<Box<SystemValueTuple>>() {
+                SystemValue::Tuple(val.clone())
+            } else if let Some(val) = field.downcast_ref::<Vec<SystemValue>>() {
+                SystemValue::Struct(val.clone())
+            } else if let Some(val) = field.downcast_ref::<File>() {
+                SystemValue::System(SystemType::File(Arc::new(Mutex::new(val.try_clone().unwrap()))))
+            } else if let Some(val) = field.downcast_ref::<PathBuf>() {
+                SystemValue::System(SystemType::PathBuf(val.clone()))
+            } else if let Some(val) = field.downcast_ref::<TcpStream>() {
+                SystemValue::System(SystemType::TcpStream(Arc::new(Mutex::new(val.try_clone().unwrap()))))
+            } else if let Some(val) = field.downcast_ref::<SystemTime>() {
+                SystemValue::System(SystemType::SystemTime(*val))
+            } else {
+                unimplemented!()
+            }
+        }
+    };
 }
 impl SystemValue {
     pub fn push(&mut self, value: SystemValue) {
@@ -326,3 +416,4 @@ impl From<Box<Node>> for DataType {
         }
     }
 }
+pub type Value = anyhow::Result<SystemValue, String>;

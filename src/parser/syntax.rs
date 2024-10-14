@@ -14,7 +14,6 @@ pub struct Node {
     #[property(get)]
     pub value: NodeValue,
     #[property(get)]
-    //pub next: Option<Box<Node>>,
     pub next: Rc<RefCell<Option<Box<Node>>>>,
     #[property(get)]
     pub line: usize,
@@ -23,39 +22,6 @@ pub struct Node {
     #[property(get)]
     pub is_statement: bool,
 }
-/*
-pub struct NodeIter<'a> {
-    current: Option<&'a Node>,
-}
-
-impl<'a> Iterator for NodeIter<'a> {
-    type Item = &'a Node;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(node) = self.current {
-            self.current = node.next.borrow().as_deref();
-            Some(node)
-        } else {
-            None
-        }
-    }
-}
-
-
-impl<'a> NodeIter<'a> {
-    pub fn new(node: &'a Node) -> Self {
-        NodeIter {
-            current: Some(node),
-        }
-    }
-}
-
-impl Node {
-    pub fn iter(&self) -> NodeIter {
-        NodeIter::new(self)
-    }
-}
-*/
 
 pub struct NodeIter {
     current: Option<Rc<RefCell<Node>>>,
@@ -398,7 +364,12 @@ impl<'a> Parser<'a> {
         let mut node = self.factor()?;
         while matches!(
             self.current_token().unwrap().token_type(),
-            TokenType::Mul | TokenType::Div | TokenType::MulAssign | TokenType::DivAssign
+            TokenType::Mul
+                | TokenType::Div
+                | TokenType::Modulus
+                | TokenType::MulAssign
+                | TokenType::DivAssign
+                | TokenType::ModulusAssign
         ) {
             let op = self.current_token().unwrap().clone();
             self.next_token();
@@ -407,8 +378,10 @@ impl<'a> Parser<'a> {
                 NodeValue::Operator(match op.token_type() {
                     TokenType::Mul => Operator::Mul(node, rhs),
                     TokenType::Div => Operator::Div(node, rhs),
+                    TokenType::Modulus => Operator::Modulus(node, rhs),
                     TokenType::MulAssign => Operator::MulAssign(node, rhs),
                     TokenType::DivAssign => Operator::DivAssign(node, rhs),
+                    TokenType::ModulusAssign => Operator::ModulusAssign(node, rhs),
                     _ => panic!(
                         "{}",
                         compile_error!(
@@ -436,6 +409,7 @@ impl<'a> Parser<'a> {
             self.current_token().unwrap().token_type(),
             TokenType::Add
                 | TokenType::Sub
+                | TokenType::Number
                 | TokenType::AddAssign
                 | TokenType::SubAssign
                 | TokenType::Increment
@@ -588,6 +562,16 @@ impl<'a> Parser<'a> {
             }
 
             TokenType::Ident => {
+                if self.current_token().unwrap().token_value() == "null" {
+                    node = Node::new(
+                        NodeValue::DataType(DataType::Null),
+                        None,
+                        self.current_token().unwrap().line(),
+                        self.current_token().unwrap().column(),
+                    );
+                    self.next_token();
+                    return Ok(Box::new(node));
+                }
                 if let Ok(bool_value) = token.token_value().parse::<bool>() {
                     if self.peek_next_token(1).unwrap().token_type() == TokenType::Dot {
                         let ident_token = self.current_token().unwrap().clone();
@@ -602,6 +586,8 @@ impl<'a> Parser<'a> {
                             self.current_token().unwrap().line(),
                             self.current_token().unwrap().column(),
                         );
+
+                        return Ok(Box::new(node));
                     }
                 } else {
                     let ident_token = self.current_token().unwrap().clone();
@@ -1247,6 +1233,162 @@ impl<'a> Parser<'a> {
             is_statement: self.is_statement,
         }))
     }
+
+    fn parse_const_declaration(&mut self) -> R<Box<Node>, String> {
+        self.next_token();
+        let var = self.current_token().unwrap().token_value().clone();
+        let mut data_type = Box::new(Node::new(
+            NodeValue::DataType(DataType::from(Parser::<'a>::new_null(
+                self.current_token().unwrap().line(),
+                self.current_token().unwrap().column(),
+            ))),
+            None,
+            self.current_token().unwrap().line(),
+            self.current_token().unwrap().column(),
+        ));
+        let mut value_node = Parser::<'a>::new_null(
+            self.current_token().unwrap().line(),
+            self.current_token().unwrap().column(),
+        );
+        if self.peek_next_token(1).unwrap().token_type() == TokenType::Colon {
+            self.next_token();
+            data_type = self.parse_data_type()?;
+        }
+        if self.current_token().unwrap().token_type() == TokenType::Semi {
+            self.is_statement = true;
+            let mut is_local = false;
+            let mut brace_count = 0;
+            for i in (0..self.i).rev() {
+                match self.tokens[i].token_type() {
+                    TokenType::LeftCurlyBrace => brace_count += 1,
+                    TokenType::RightCurlyBrace => brace_count -= 1,
+                    _ => {}
+                }
+                if brace_count > 0 {
+                    is_local = true;
+                    break;
+                }
+            }
+
+            return Ok(Box::new(Node {
+                value: NodeValue::Declaration(Declaration::Const(
+                    Box::new(Node::new(
+                        NodeValue::Variable(
+                            Parser::<'a>::new_null(
+                                self.current_token().unwrap().line(),
+                                self.current_token().unwrap().column(),
+                            ),
+                            var,
+                            false,
+                            false,
+                            None,
+                        ),
+                        None,
+                        self.current_token().unwrap().line(),
+                        self.current_token().unwrap().column(),
+                    )),
+                    data_type,
+                    value_node,
+                    is_local,
+                )),
+                next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
+                line: self.current_token().unwrap().line(),
+                column: self.current_token().unwrap().column(),
+                is_statement: self.is_statement,
+            }));
+        }
+        self.next_token();
+        if self.current_token().unwrap().token_type() == TokenType::Equals {
+            self.next_token();
+        }
+        if self.current_token().unwrap().token_type() == TokenType::Semi {
+            self.is_statement = true;
+            let mut is_local = false;
+            let mut brace_count = 0;
+            for i in (0..self.i).rev() {
+                match self.tokens[i].token_type() {
+                    TokenType::LeftCurlyBrace => brace_count += 1,
+                    TokenType::RightCurlyBrace => brace_count -= 1,
+                    _ => {}
+                }
+                if brace_count > 0 {
+                    is_local = true;
+                    break;
+                }
+            }
+
+            return Ok(Box::new(Node {
+                value: NodeValue::Declaration(Declaration::Const(
+                    Box::new(Node::new(
+                        NodeValue::Variable(
+                            Parser::<'a>::new_null(
+                                self.current_token().unwrap().line(),
+                                self.current_token().unwrap().column(),
+                            ),
+                            var,
+                            false,
+                            false,
+                            None,
+                        ),
+                        None,
+                        self.current_token().unwrap().line(),
+                        self.current_token().unwrap().column(),
+                    )),
+                    data_type,
+                    value_node,
+                    is_local,
+                )),
+                next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
+                line: self.current_token().unwrap().line(),
+                column: self.current_token().unwrap().column(),
+                is_statement: self.is_statement,
+            }));
+        }
+        value_node = self.expr()?;
+        if self.current_token().unwrap().token_type() == TokenType::Semi {
+            self.is_statement = true;
+        }
+        let mut is_local = false;
+        let mut brace_count = 0;
+        for i in (0..self.i).rev() {
+            match self.tokens[i].token_type() {
+                TokenType::LeftCurlyBrace => brace_count += 1,
+                TokenType::RightCurlyBrace => brace_count -= 1,
+                _ => {}
+            }
+            if brace_count > 0 {
+                is_local = true;
+                break;
+            }
+        }
+
+        return Ok(Box::new(Node {
+            value: NodeValue::Declaration(Declaration::Const(
+                Box::new(Node::new(
+                    NodeValue::Variable(
+                        Parser::<'a>::new_null(
+                            self.current_token().unwrap().line(),
+                            self.current_token().unwrap().column(),
+                        ),
+                        var,
+                        false,
+                        false,
+                        None,
+                    ),
+                    None,
+                    self.current_token().unwrap().line(),
+                    self.current_token().unwrap().column(),
+                )),
+                data_type,
+                value_node,
+                is_local,
+            )),
+            next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
+            line: self.current_token().unwrap().line(),
+            column: self.current_token().unwrap().column(),
+            is_statement: self.is_statement,
+        }));
+    }
     fn parse_variable_declaration(&mut self) -> R<Box<Node>, String> {
         self.next_token();
         let mut is_mutable = false;
@@ -1740,6 +1882,11 @@ impl<'a> Parser<'a> {
         {
             self.parse_variable_declaration()
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
+            && (self.current_token().unwrap().token_value() == "const"
+                || self.current_token().unwrap().token_value() == "constant")
+        {
+            self.parse_const_declaration()
+        } else if self.current_token().unwrap().token_type() == TokenType::Ident
             && self.peek_next_token(2).unwrap().token_type() == TokenType::Equals
             && self.current_token().unwrap().token_value() == "type"
         {
@@ -1784,41 +1931,6 @@ impl<'a> Parser<'a> {
 
         Some(result)
     }
-    /*
-    fn parse_statement(&mut self) -> R<Box<Node>, String> {
-        self.parse_statement_recursive(None)
-    }
-
-    fn parse_statement_recursive(
-        &mut self,
-        previous_node: Option<Box<Node>>,
-    ) -> R<Box<Node>, String> {
-        if self.current_token().unwrap().token_type() == TokenType::Eof
-            || self.current_token().unwrap().token_type() == TokenType::RightCurlyBrace
-        {
-            return previous_node.ok_or("No statements found".to_string());
-        }
-
-        if let Some(statement) = self.parse_single_statement() {
-            let node = statement?;
-            if let Some(mut prev) = previous_node {
-                // ここで新しいノードを追加する
-                let mut current = prev.as_mut();
-                while current.next.is_some() {
-                    current = current.next.as_mut().unwrap();
-                }
-                current.set_next(Some(node.clone()));
-                self.parse_statement_recursive(Some(prev))
-            } else {
-                self.parse_statement_recursive(Some(node))
-            }
-        } else {
-            Err("Failed to parse statement".to_string())
-        }
-    }
-    pub fn parse(&mut self) -> R<Box<Node>, String> {
-        self.parse_statement()
-    };*/
 
     fn parse_statement_recursive(
         &mut self,

@@ -1,6 +1,17 @@
-// たぬぅスクリプト[0.1]
+// tanucc-script[0.1]
 include "std"
+
 fn main(){
-    let a= 0;
-    a
+   const PI =3.141592653589793;
+    const DEG = 180.0;
+    let a = 0;
+    let file_path = @to_path("std.txt");
+    let file = @open(file_path);
+    let contents = @read_file(file);
+    let s  =@as_ptr(file);
+    let aaa = 1.0;
+    let aaas = null;
+    let c = 10*(121*2);
+    //let r = @sin(10.1)*(PI/DEG);
+    Std::func_lists()
 }

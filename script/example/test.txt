@@ -1,3 +1,5 @@
+
+// tanucc-script[0.1]
 include "example/test2"
 /*
 // フィボナッチ

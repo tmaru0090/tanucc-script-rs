@@ -19,7 +19,7 @@ use property_rs::Property;
 use rodio::{source::Source, OutputStream};
 use serde::{Deserialize, Serialize};
 use serde_json::to_string_pretty;
-use serde_json::{Number, Value};
+use serde_json::Number;
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -33,6 +33,8 @@ use std::ops::{Add, Div, Mul, Sub};
 use std::path::PathBuf;
 use std::process::{Command, Output};
 use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::thread::sleep;
 use std::time::Duration;
 use std::time::Instant;
@@ -49,6 +51,7 @@ use win_msgbox::{
     AbortRetryIgnore, CancelTryAgainContinue, Icon, MessageBox, Okay, OkayCancel, RetryCancel,
     YesNo, YesNoCancel,
 };
+
 fn get_duration(file_path: &str) -> Option<Duration> {
     // ファイルを開く
     let file = File::open(file_path).ok()?;
@@ -234,7 +237,7 @@ impl TypeChecker {
     }
 
     // 値の型変換
-    pub fn convert_to_value(value: &NodeValue) -> R<SystemValue, String> {
+    pub fn convert_to_value(value: &NodeValue) -> Value {
         match value {
             // 整数型
             NodeValue::DataType(DataType::Int(val)) => {
@@ -280,7 +283,7 @@ impl TypeChecker {
         }
     }
     // Type conversion: converts NodeValue into a SystemValue based on the expected type
-    pub fn convert_type_to_value(type_name: &String, value: &NodeValue) -> R<SystemValue, String> {
+    pub fn convert_type_to_value(type_name: &String, value: &NodeValue) -> Value {
         match type_name.as_str() {
             "i64" => {
                 if let NodeValue::DataType(DataType::Int(val)) = value {
@@ -418,8 +421,7 @@ pub struct Decoder {
     current_node: Option<(String, Box<Node>)>, // 現在のノード(ファイル名,現在のNode)
     #[property(get)]
     generated_ast_file: bool, // ASTの生成をするかどうか
-    system_functions:
-        IndexMap<String, fn(&mut Decoder, &Vec<Node>, &Node) -> R<SystemValue, String>>,
+    system_functions: IndexMap<String, fn(&mut Decoder, &Vec<Node>, &Node) -> Value>,
     #[property(get)]
     generated_error_log_file: bool, // エラーログを生成するかどうか
 
@@ -435,7 +437,7 @@ pub struct Decoder {
     entry_func: (bool, String), // main関数の有無(フラグ,見つかった関数名(main|Main))
 }
 impl Decoder {
-    fn check_reserved_words(&self, input: &str, reserved_words: &[&str]) -> Result<Value, String> {
+    fn check_reserved_words(&self, input: &str, reserved_words: &[&str]) -> Value {
         if reserved_words.contains(&input) {
             return Err(compile_error!(
                 "error",
@@ -450,7 +452,7 @@ impl Decoder {
                 input
             ));
         } else {
-            Ok(Value::Null)
+            Ok(SystemValue::Null)
         }
     }
 
@@ -860,22 +862,14 @@ impl Decoder {
 
         Ok(result)
     }
-    fn eval_single_comment(
-        &mut self,
-        content: &String,
-        lines: &(usize, usize),
-    ) -> R<SystemValue, String> {
+    fn eval_single_comment(&mut self, content: &String, lines: &(usize, usize)) -> Value {
         self.context
             .comment_lists
             .insert((lines.0, lines.1), vec![content.clone()]);
         debug!("MultiComment added at line {}, column {}", lines.0, lines.1);
         Ok(SystemValue::Null)
     }
-    fn eval_multi_comment(
-        &mut self,
-        content: &Vec<String>,
-        lines: &(usize, usize),
-    ) -> R<SystemValue, String> {
+    fn eval_multi_comment(&mut self, content: &Vec<String>, lines: &(usize, usize)) -> Value {
         let mut result = SystemValue::Null;
         self.context
             .comment_lists
@@ -1046,7 +1040,7 @@ impl Decoder {
         body: &Box<Node>,
         return_type: &Box<Node>,
         is_system: &bool,
-    ) -> R<SystemValue, String> {
+    ) -> Value {
         debug!(
             "eval_function: name: {:?} args: {:?} body: {:?} return_type: {:?} is_system: {:?}",
             name.clone(),
@@ -1131,7 +1125,8 @@ impl Decoder {
         );
         Ok(SystemValue::Null)
     }
-    fn __system_fn_syntax<'a>(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+
+    fn __system_fn_syntax<'a>(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 2 {
             return Err("syntax expects 2 arguments".into());
         }
@@ -1171,28 +1166,59 @@ impl Decoder {
         return Ok(SystemValue::Null);
     }
 
-    fn __system_fn_line(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_as_ptr(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        if args.len() != 1 {
+            return Err("asptr expects no arguments".into());
+        }
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+        let value = &evaluated_args[0];
+        return Ok(SystemValue::Pointer(Box::new(value.clone())));
+    }
+
+    fn __system_fn_as(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        if args.len() != 2 {
+            return Err("as expects no arguments".into());
+        }
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+        let mut data_name = if let SystemValue::String(ref v) = &evaluated_args[1] {
+            v.clone()
+        } else {
+            String::new()
+        };
+        return Ok(SystemValue::Null);
+    }
+    fn __system_fn_line(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if !args.is_empty() {
             return Err("line expects no arguments".into());
         }
         let line = node.line().into();
         return Ok(line);
     }
-    fn __system_fn_column(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_column(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if !args.is_empty() {
             return Err("column expects no arguments".into());
         }
         let column = node.column().into();
         return Ok(column);
     }
-    fn __system_fn_file(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_file(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if !args.is_empty() {
             return Err("file expects no arguments".into());
         }
         let file = self.current_node().unwrap().0.into();
         return Ok(file);
     }
-    fn __system_fn_list_files(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_list_files(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 1 {
             return Err("list_files expects exactly one argument".into());
         }
@@ -1219,7 +1245,7 @@ impl Decoder {
         return Ok(paths.into());
     }
 
-    fn __system_fn_play_music(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_play_music(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 1 {
             return Err("play_music expects exactly one argument".into());
         }
@@ -1249,7 +1275,7 @@ impl Decoder {
         std::thread::sleep(duration);
         return Ok(SystemValue::Null);
     }
-    fn __system_fn_str(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_str(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 1 {
             return Err("to_str expects exactly one argument".into());
         }
@@ -1260,11 +1286,7 @@ impl Decoder {
         let string = n.to_string();
         return Ok(string.into());
     }
-    fn __system_fn_show_msg_box(
-        &mut self,
-        args: &Vec<Node>,
-        node: &Node,
-    ) -> R<SystemValue, String> {
+    fn __system_fn_show_msg_box(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 4 {
             return Err("show_msg_box expects exactly two arguments".into());
         }
@@ -1287,7 +1309,7 @@ impl Decoder {
         let responce = show_messagebox(&message_type, &title, &message, icon.as_deref());
         return Ok(responce.unwrap().into());
     }
-    fn __system_fn_open_recent(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_open_recent(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if !args.is_empty() {
             return Err("open_recent expects no arguments".into());
         }
@@ -1305,7 +1327,7 @@ impl Decoder {
         return Ok(paths.into());
     }
 
-    fn __system_fn_sleep(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_sleep(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 1 {
             return Err("sleep expects exactly one argument".into());
         }
@@ -1317,7 +1339,7 @@ impl Decoder {
         return Ok(SystemValue::Null);
     }
 
-    fn __system_fn_exit(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_exit(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 1 {
             return Err("exit expects exactly one argument".into());
         }
@@ -1330,7 +1352,7 @@ impl Decoder {
         return Ok(SystemValue::Null);
     }
 
-    fn __system_fn_args(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_args(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if !args.is_empty() {
             return Err("args expects no arguments".into());
         }
@@ -1339,7 +1361,7 @@ impl Decoder {
         return Ok(value);
     }
 
-    fn __system_fn_cmd(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_cmd(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         let mut evaluated_args = Vec::new();
         for arg in args.clone() {
             let evaluated_arg = self.execute_node(&arg)?;
@@ -1385,7 +1407,7 @@ impl Decoder {
             SystemValue::Pointer(Box::new(SystemValue::String(stderr))),
         ]));
     }
-    fn __system_fn_read_file(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_read_file(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 1 {
             return Err("read_file expects exactly one argument".into());
         }
@@ -1399,12 +1421,20 @@ impl Decoder {
         return Ok(SystemValue::String(contents));
     }
 
-    fn __system_fn_write_file(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_write_file(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 2 {
             return Err("write_file expects exactly two arguments".into());
         }
+
+        let mut file: Option<Arc<Mutex<File>>> = None;
         let file_name = match self.execute_node(&args[0])? {
             SystemValue::String(v) => v,
+            SystemValue::System(SystemType::File(ref _file)) => {
+                file = Some(_file.clone());
+
+                String::new()
+            }
+
             _ => return Err("write_file expects a string as the file name".into()),
         };
         let content = match self.execute_node(&args[1])? {
@@ -1436,11 +1466,7 @@ impl Decoder {
         return Ok(SystemValue::Null);
     }
 
-    fn __system_fn_system_function_lists(
-        &mut self,
-        args: &Vec<Node>,
-        node: &Node,
-    ) -> R<SystemValue, String> {
+    fn __system_fn_system_function_lists(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if !args.is_empty() {
             return Err("system function lists expects exactly no argument".into());
         }
@@ -1448,7 +1474,7 @@ impl Decoder {
         return Ok(lists.into());
     }
 
-    fn __system_fn_print(&mut self, args: &Vec<Node>, node: &Node) -> R<SystemValue, String> {
+    fn __system_fn_print(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.is_empty() {
             return Err("print expects no argument".into());
         }
@@ -1473,11 +1499,208 @@ impl Decoder {
         }
         return Ok(SystemValue::Null);
     }
+    fn __system_fn_open_file(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+        let mut options = OpenOptions::new();
+
+        let _file = options.read(true);
+        let mut file_name = String::new();
+        for value in &evaluated_args {
+            match value {
+                SystemValue::Bool(ref v) => {
+                    _file.write(v.clone());
+                }
+                SystemValue::String(ref v) => {
+                    file_name = v.clone();
+                }
+                SystemValue::System(SystemType::PathBuf(ref _path)) => {
+                    let mut path = _path.clone();
+                    file_name = path.to_str().unwrap().to_string();
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+        let file = match _file.open(file_name.clone()) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+        return Ok(SystemValue::System(SystemType::File(Arc::new(Mutex::new(
+            file,
+        )))));
+    }
+
+    fn __system_fn_read_file_(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+        for value in &evaluated_args {
+            match value {
+                SystemValue::System(SystemType::File(ref _file)) => {
+                    let mut file = Arc::clone(_file);
+                    let mut contents = String::new();
+                    file.lock().unwrap().read_to_string(&mut contents).unwrap();
+
+                    return Ok(SystemValue::String(contents.clone()));
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+        return Ok(SystemValue::Null);
+    }
+
+    fn __system_fn_to_path(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut string = String::new();
+        for arg in args.clone() {
+            match arg.value {
+                NodeValue::DataType(DataType::String(ref v)) => {
+                    let path = PathBuf::from(v.clone());
+                    return Ok(SystemValue::System(SystemType::PathBuf(path.clone())));
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+        return Ok(SystemValue::Null);
+    }
+    fn __system_fn_create_file(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+        let mut file_name = String::new();
+        for value in &evaluated_args {
+            match value {
+                SystemValue::String(ref v) => {
+                    file_name = v.clone();
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+        let file = File::create(file_name.clone()).unwrap();
+        return Ok(SystemValue::System(SystemType::File(Arc::new(Mutex::new(
+            file,
+        )))));
+    }
+
+    fn __system_fn_sin(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+
+        for value in &evaluated_args {
+            match value {
+                SystemValue::F32(ref v) => {
+                    let value = v.clone();
+                    return Ok(value.sin().into());
+                }
+                SystemValue::F64(ref v) => {
+                    let value = v.clone();
+                    return Ok(value.sin().into());
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+        return Ok(SystemValue::Null);
+    }
+    fn __system_fn_cos(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+
+        for value in &evaluated_args {
+            match value {
+                SystemValue::F32(ref v) => {
+                    let value = v.clone();
+                    return Ok(value.cos().into());
+                }
+                SystemValue::F64(ref v) => {
+                    let value = v.clone();
+                    return Ok(value.cos().into());
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+        return Ok(SystemValue::Null);
+    }
+    fn __system_fn_tan(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+
+        for value in &evaluated_args {
+            match value {
+                SystemValue::F32(ref v) => {
+                    let value = v.clone();
+                    return Ok(value.tan().into());
+                }
+                SystemValue::F64(ref v) => {
+                    let value = v.clone();
+                    return Ok(value.tan().into());
+                }
+                _ => {
+                    todo!();
+                }
+            }
+        }
+        return Ok(SystemValue::Null);
+    }
+
     fn register_system_all_functions(&mut self) {
         self.system_functions.insert(
             "func_lists".to_string(),
             Decoder::__system_fn_system_function_lists,
         );
+
+        self.system_functions
+            .insert("sin".to_string(), Decoder::__system_fn_sin);
+        self.system_functions
+            .insert("cos".to_string(), Decoder::__system_fn_cos);
+
+        self.system_functions
+            .insert("tan".to_string(), Decoder::__system_fn_tan);
+
+        self.system_functions
+            .insert("as_ptr".to_string(), Decoder::__system_fn_as_ptr);
+        self.system_functions
+            .insert("to_path".to_string(), Decoder::__system_fn_to_path);
+
+        self.system_functions
+            .insert("open".to_string(), Decoder::__system_fn_open_file);
+        self.system_functions
+            .insert("create".to_string(), Decoder::__system_fn_create_file);
+
         self.system_functions
             .insert("print".to_string(), Decoder::__system_fn_print);
         self.system_functions
@@ -1503,7 +1726,7 @@ impl Decoder {
         self.system_functions
             .insert("sleep".to_string(), Decoder::__system_fn_sleep);
         self.system_functions
-            .insert("read_file".to_string(), Decoder::__system_fn_read_file);
+            .insert("read_file".to_string(), Decoder::__system_fn_read_file_);
         self.system_functions
             .insert("write_file".to_string(), Decoder::__system_fn_write_file);
         self.system_functions
@@ -1520,7 +1743,7 @@ impl Decoder {
         name: &String,
         args: &Vec<Node>,
         is_system: &bool,
-    ) -> R<SystemValue, String> {
+    ) -> Value {
         let mut result = SystemValue::Null;
         let mut evaluated_args = Vec::new();
         for arg in args {
@@ -1670,6 +1893,170 @@ impl Decoder {
 
         Ok(result)
     }
+    fn eval_const_declaration(
+        &mut self,
+        node: &Node,
+        var_name: &Box<Node>,
+        data_type: &Box<Node>,
+        value: &Box<Node>,
+        is_local: &bool,
+    ) -> Value {
+        // ステートメントフラグのチェック
+        if !node.is_statement() {
+            return Err(compile_error!(
+                "error",
+                self.current_node.clone().unwrap().1.line(),
+                self.current_node.clone().unwrap().1.column(),
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Variable declaration must be a statement"
+            ));
+        }
+
+        //debug!("is_reference: {:?}", is_reference);
+        let name = match var_name.value() {
+            NodeValue::Variable(_, v, _, _, _) => v,
+            _ => String::new(),
+        };
+
+        // Variable(Box<Node>, String,bool, bool),// 変数(型名,変数名,可変性フラグ,参照型フラグ)
+        let value_is_reference = match &value.clone().value() {
+            NodeValue::Variable(_, _, _, v, _) => v.clone(),
+            _ => false,
+        };
+
+        self.check_reserved_words(&name, RESERVED_WORDS)?;
+
+        let mut v_type: SystemValue = match data_type.value() {
+            NodeValue::DataType(DataType::String(v)) => v.clone(),
+            _ => String::new(),
+        }
+        .into();
+        let (mut generic_v_name, mut generic_v_lists) = match data_type.value() {
+            NodeValue::DataType(DataType::Generic(v, v_lists)) => (v.clone(), v_lists.clone()),
+            _ => (String::new(), vec![]),
+        };
+        // panic!("name: {:?} lists: {:?}",generic_v_name,generic_v_lists);
+
+        //panic!("name: {:?} lists: {:?}",generic_v_name,generic_v_lists);
+
+        let mut v_type_string = String::new();
+        let mut v_value: SystemValue = SystemValue::Null;
+        if let SystemValue::String(ref v) = v_type.clone() {
+            if v.is_empty() {
+            } else {
+            }
+            v_type_string = v.clone();
+            v_value = self.execute_node(&value)?;
+        }
+        let address;
+
+        {
+            // 一時的にcontextの借用を解除
+            let context = if *is_local {
+                &mut self.context.local_context
+            } else {
+                &mut self.context.global_context
+            };
+
+            if context.contains_key(&name) {
+                return Err(compile_error!(
+                    "error",
+                    self.current_node.clone().unwrap().1.line(),
+                    self.current_node.clone().unwrap().1.column(),
+                    &self.current_node.clone().unwrap().0,
+                    &self
+                        .file_contents
+                        .get(&self.current_node.clone().unwrap().0)
+                        .unwrap(),
+                    "Variable '{}' is already defined",
+                    name
+                ));
+            }
+        }
+
+        if value_is_reference {
+            // 参照型の場合、右辺の変数名を取り出してアドレスを取得して直接変更
+            address = {
+                let context = if *is_local {
+                    &mut self.context.local_context
+                } else {
+                    &mut self.context.global_context
+                };
+
+                match value.value() {
+                    NodeValue::Variable(_, v, _, _, _) => {
+                        if let Some(variable) = context.get(&v) {
+                            variable.address
+                        } else {
+                            return Err(compile_error!(
+                                "error",
+                                self.current_node.clone().unwrap().1.line(),
+                                self.current_node.clone().unwrap().1.column(),
+                                &self.current_node.clone().unwrap().0,
+                                &self
+                                    .file_contents
+                                    .get(&self.current_node.clone().unwrap().0)
+                                    .unwrap(),
+                                "Variable '{}' not found in context",
+                                v
+                            ));
+                        }
+                    }
+                    _ => {
+                        let _address = self.memory_mgr.allocate(v_value.clone());
+                        _address
+                    }
+                }
+            };
+
+            let context = if *is_local {
+                &mut self.context.local_context
+            } else {
+                &mut self.context.global_context
+            };
+
+            context.insert(
+                name.clone(),
+                Variable {
+                    value: v_value.clone(),
+                    data_name: v_type_string.clone(),
+                    address,
+                    is_mutable: false,
+                    size: v_value.size(),
+                },
+            );
+        } else {
+            address = self.memory_mgr.allocate(v_value.clone());
+            let context = if *is_local {
+                &mut self.context.local_context
+            } else {
+                &mut self.context.global_context
+            };
+
+            context.insert(
+                name.clone(),
+                Variable {
+                    value: v_value.clone(),
+                    data_name: v_type_string.clone(),
+                    address,
+                    is_mutable: false,
+                    size: v_value.size(),
+                },
+            );
+        }
+
+        debug!("Const Declaration: name = {:?}, data_type = {:?}, value = {:?}, address = {:?} size = {:?} is_local: {} value_is_reference: {:?}", name, v_type, v_value, address,v_value.size(),is_local,value_is_reference);
+        let line = self.current_node.clone().unwrap().1.line();
+        let column = self.current_node.clone().unwrap().1.column();
+        self.context
+            .used_context
+            .insert(name.clone(), (line, column, false));
+        Ok(v_value)
+    }
 
     fn eval_variable_declaration(
         &mut self,
@@ -1679,7 +2066,7 @@ impl Decoder {
         value: &Box<Node>,
         is_local: &bool,
         is_mutable: &bool,
-    ) -> R<SystemValue, String> {
+    ) -> Value {
         // ステートメントフラグのチェック
         if !node.is_statement() {
             return Err(compile_error!(
@@ -1841,11 +2228,7 @@ impl Decoder {
         Ok(v_value)
     }
 
-    fn eval_type_declaration(
-        &mut self,
-        _type_name: &Box<Node>,
-        _type: &Box<Node>,
-    ) -> R<SystemValue, String> {
+    fn eval_type_declaration(&mut self, _type_name: &Box<Node>, _type: &Box<Node>) -> Value {
         let name = match _type_name.value() {
             NodeValue::Variable(_, v, _, _, _) => v,
             _ => String::new(),
@@ -1882,7 +2265,7 @@ impl Decoder {
         );
         Ok(SystemValue::String(name.into()))
     }
-    fn eval_variable(&mut self, name: &String) -> R<SystemValue, String> {
+    fn eval_variable(&mut self, name: &String) -> Value {
         let line = self.current_node.clone().unwrap().1.line();
         let column = self.current_node.clone().unwrap().1.column();
         self.context
@@ -1933,12 +2316,12 @@ impl Decoder {
             Ok(SystemValue::Null)
         }
     }
-    fn eval_return(&mut self, ret: &Box<Node>) -> R<SystemValue, String> {
+    fn eval_return(&mut self, ret: &Box<Node>) -> Value {
         let ret = self.execute_node(&ret)?;
         debug!("Return: {:?}", ret);
         Ok(ret)
     }
-    fn eval_binary_increment(&mut self, lhs: &Box<Node>) -> R<SystemValue, String> {
+    fn eval_binary_increment(&mut self, lhs: &Box<Node>) -> Value {
         let left_value = match self.execute_node(&lhs)? {
             SystemValue::I32(v) => v,
             _ => -1,
@@ -1963,7 +2346,7 @@ impl Decoder {
             Ok(SystemValue::Null)
         }
     }
-    fn eval_binary_decrement(&mut self, lhs: &Box<Node>) -> R<SystemValue, String> {
+    fn eval_binary_decrement(&mut self, lhs: &Box<Node>) -> Value {
         let left_value = match self.execute_node(&lhs)? {
             SystemValue::I32(v) => v,
             _ => -1,
@@ -2145,10 +2528,12 @@ impl Decoder {
         | NodeValue::Operator(Operator::Sub(lhs, rhs))
         | NodeValue::Operator(Operator::Mul(lhs, rhs))
         | NodeValue::Operator(Operator::Div(lhs, rhs))
+        | NodeValue::Operator(Operator::Modulus(lhs, rhs))
         | NodeValue::Operator(Operator::AddAssign(lhs, rhs))
         | NodeValue::Operator(Operator::SubAssign(lhs, rhs))
         | NodeValue::Operator(Operator::MulAssign(lhs, rhs))
-        | NodeValue::Operator(Operator::DivAssign(lhs, rhs)) = &node.value
+        | NodeValue::Operator(Operator::DivAssign(lhs, rhs))
+        | NodeValue::Operator(Operator::ModulusAssign(lhs, rhs)) = &node.value
         {
             let left_value = self.execute_node(lhs)?;
             let right_value = self.execute_node(rhs)?;
@@ -2156,6 +2541,8 @@ impl Decoder {
             match (&node.value, left_value.clone(), right_value.clone()) {
                 (NodeValue::Operator(Operator::Add(_, _)), left, right) => match (left, right) {
                     (SystemValue::I32(l), SystemValue::I32(r)) => Ok(SystemValue::I32(l + r)),
+
+                    (SystemValue::I64(l), SystemValue::I64(r)) => Ok(SystemValue::I64(l + r)),
                     (SystemValue::F64(l), SystemValue::F64(r)) => Ok(SystemValue::F64(l + r)),
                     (SystemValue::String(l), SystemValue::String(r)) => {
                         Ok(SystemValue::String(l + &r))
@@ -2178,6 +2565,8 @@ impl Decoder {
                 },
                 (NodeValue::Operator(Operator::Sub(_, _)), left, right) => match (left, right) {
                     (SystemValue::I32(l), SystemValue::I32(r)) => Ok(SystemValue::I32(l - r)),
+
+                    (SystemValue::I64(l), SystemValue::I64(r)) => Ok(SystemValue::I64(l - r)),
                     (SystemValue::F64(l), SystemValue::F64(r)) => Ok(SystemValue::F64(l - r)),
                     _ => {
                         return Err(compile_error!(
@@ -2197,6 +2586,8 @@ impl Decoder {
                 },
                 (NodeValue::Operator(Operator::Mul(_, _)), left, right) => match (left, right) {
                     (SystemValue::I32(l), SystemValue::I32(r)) => Ok(SystemValue::I32(l * r)),
+
+                    (SystemValue::I64(l), SystemValue::I64(r)) => Ok(SystemValue::I64(l * r)),
                     (SystemValue::F64(l), SystemValue::F64(r)) => Ok(SystemValue::F64(l * r)),
                     _ => {
                         return Err(compile_error!(
@@ -2233,6 +2624,26 @@ impl Decoder {
                         }
                         Ok(SystemValue::I32(l / r))
                     }
+
+                    (SystemValue::I64(l), SystemValue::I64(r)) => {
+                        if r == 0 {
+                            return Err(compile_error!(
+                                "error",
+                                node.line,
+                                node.column,
+                                &self.current_node.clone().unwrap().0,
+                                &self
+                                    .file_contents
+                                    .get(&self.current_node.clone().unwrap().0)
+                                    .unwrap(),
+                                "Division by zero: {:?} {:?}",
+                                left_value,
+                                right_value
+                            ));
+                        }
+                        Ok(SystemValue::I64(l / r))
+                    }
+
                     (SystemValue::F64(l), SystemValue::F64(r)) => {
                         if r == 0.0 {
                             return Err(compile_error!(
@@ -2251,6 +2662,7 @@ impl Decoder {
                         }
                         Ok(SystemValue::F64(l / r))
                     }
+
                     _ => {
                         return Err(compile_error!(
                             "error",
@@ -2267,6 +2679,18 @@ impl Decoder {
                         ));
                     }
                 },
+                (NodeValue::Operator(Operator::Modulus(_, _)), left, right) => {
+                    match (left, right) {
+                        (SystemValue::I32(l), SystemValue::I32(r)) => Ok(SystemValue::I32(l % r)),
+
+                        (SystemValue::I64(l), SystemValue::I64(r)) => Ok(SystemValue::I64(l % r)),
+                        (SystemValue::F64(l), SystemValue::F64(r)) => Ok(SystemValue::F64(l % r)),
+                        _ => {
+                            todo!();
+                        }
+                    }
+                }
+
                 _ => {
                     return Err(compile_error!(
                         "error",
@@ -2448,7 +2872,14 @@ impl Decoder {
         match &node.value {
             NodeValue::DataType(DataType::Int(number)) => Ok(SystemValue::I64(*number)),
             NodeValue::DataType(DataType::Float(number)) => Ok(SystemValue::F64(*number)),
-            NodeValue::DataType(DataType::String(s)) => Ok(SystemValue::String(s.clone())),
+            NodeValue::DataType(DataType::String(s)) => {
+                // let path = PathBuf::from(s.clone());
+                // if path.exists(){
+                //     return Ok(SystemValue::System(SystemType::PathBuf(path.clone())));
+                // }else{
+                return Ok(SystemValue::String(s.clone()));
+                // }
+            }
             NodeValue::DataType(DataType::Bool(b)) => Ok(SystemValue::Bool(*b)),
             NodeValue::DataType(DataType::Array(data_type, values)) => {
                 self.eval_array(&data_type, &values)
@@ -2559,11 +2990,7 @@ impl Decoder {
         );
         Ok(updated_struct)
     }
-    fn eval_struct_statement(
-        &mut self,
-        name: &String,
-        members: &Vec<Box<Node>>,
-    ) -> R<SystemValue, String> {
+    fn eval_struct_statement(&mut self, name: &String, members: &Vec<Box<Node>>) -> Value {
         let context = &mut self.context.global_context;
         if context.contains_key(&name.clone()) {
             return Err(compile_error!(
@@ -2647,7 +3074,7 @@ impl Decoder {
         &mut self,
         name: &String,
         init_values: &Vec<(String, Box<Node>)>,
-    ) -> R<SystemValue, String> {
+    ) -> Value {
         let context = &mut self.context.global_context;
         if !context.contains_key(&name.clone()) {
             return Err(compile_error!(
@@ -2752,11 +3179,7 @@ impl Decoder {
 
         Err("Invalid struct format".to_string())
     }
-    fn eval_member_access(
-        &mut self,
-        member: &Box<Node>,
-        item: &Box<Node>,
-    ) -> R<SystemValue, String> {
+    fn eval_member_access(&mut self, member: &Box<Node>, item: &Box<Node>) -> Value {
         let member_value = self.execute_node(&*member)?;
 
         let mut ret = SystemValue::Null;
@@ -2954,10 +3377,7 @@ impl Decoder {
 
         Ok(ret)
     }
-    fn eval_scope_resolution(
-        &mut self,
-        scope_resolution: &Vec<Box<Node>>,
-    ) -> R<SystemValue, String> {
+    fn eval_scope_resolution(&mut self, scope_resolution: &Vec<Box<Node>>) -> Value {
         let context = &mut self.context.global_context;
         let first_name = match scope_resolution[0].value {
             NodeValue::Variable(_, ref v, _, _, _) => v.clone(),
@@ -3100,7 +3520,7 @@ impl Decoder {
         Ok(current_value)
     }
     // ノードを評価
-    fn execute_node(&mut self, node: &Node) -> R<SystemValue, String> {
+    fn execute_node(&mut self, node: &Node) -> Value {
         let original_node = self.current_node.clone();
         self.current_node = Some((
             self.current_node.as_ref().unwrap().0.clone(),
@@ -3118,6 +3538,12 @@ impl Decoder {
             NodeValue::EndStatement => {
                 result = SystemValue::Null;
             }
+            // nullはDataType::Nullを使うように変更しろよ
+            //
+            NodeValue::DataType(DataType::Null) => {
+                result = SystemValue::Null;
+            }
+
             NodeValue::Null => {
                 result = SystemValue::Null;
             }
@@ -3263,10 +3689,12 @@ impl Decoder {
             | NodeValue::Operator(Operator::Sub(_, _))
             | NodeValue::Operator(Operator::Mul(_, _))
             | NodeValue::Operator(Operator::Div(_, _))
+            | NodeValue::Operator(Operator::Modulus(_, _))
             | NodeValue::Operator(Operator::AddAssign(_, _))
             | NodeValue::Operator(Operator::SubAssign(_, _))
             | NodeValue::Operator(Operator::MulAssign(_, _))
-            | NodeValue::Operator(Operator::DivAssign(_, _)) => {
+            | NodeValue::Operator(Operator::DivAssign(_, _))
+            | NodeValue::Operator(Operator::ModulusAssign(_, _)) => {
                 result = self.eval_binary_op(&node.clone())?;
             }
             NodeValue::Declaration(Declaration::Function(
@@ -3297,6 +3725,16 @@ impl Decoder {
                     value,
                     is_local,
                     is_mutable,
+                )?;
+            }
+
+            NodeValue::Declaration(Declaration::Const(var_name, data_type, value, is_local)) => {
+                result = self.eval_const_declaration(
+                    &node.clone(),
+                    var_name,
+                    data_type,
+                    value,
+                    is_local,
                 )?;
             }
 
