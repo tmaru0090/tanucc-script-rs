@@ -1,4 +1,5 @@
 use libloading::{Library, Symbol};
+use std::ffi::CString;
 use std::fs::File;
 use std::net::TcpStream;
 use std::path::PathBuf;
@@ -170,7 +171,7 @@ pub enum NodeValue {
     Include(String),                                              // インクルード
     Mod(String),                                                  // モジュール宣言
     ModDeclaration(String, Vec<Box<Node>>),                       // モジュール定義
-    Use(String, Box<Node>),                                       // インポート宣言
+    Use(Box<Node>),                                               // インポート宣言()
     MemberAccess(Box<Node>, Box<Node>),                           // メンバアクセス演算子
     UserSyntax(String, Box<Node>),                                // ユーザー定義構文(構文名,構文)
     StructInstance(String, Vec<(String, Box<Node>)>), // 構造体インスタンス(構造体名,フィールド値のリスト(名前,値))
@@ -285,6 +286,7 @@ pub enum SystemType {
     TcpStream(Arc<Mutex<TcpStream>>),
     SystemTime(SystemTime),
     Library(Arc<Mutex<Library>>),
+    CString(CString),
 }
 
 #[derive(Debug, Clone)]

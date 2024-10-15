@@ -862,6 +862,11 @@ impl Decoder {
 
         Ok(result)
     }
+
+    fn eval_use(&mut self, file_name: &String) -> Result<SystemValue, String> {
+        return Ok(SystemValue::Null);
+    }
+
     fn eval_single_comment(&mut self, content: &String, lines: &(usize, usize)) -> Value {
         self.context
             .comment_lists
@@ -1211,6 +1216,44 @@ impl Decoder {
         let column = node.column().into();
         return Ok(column);
     }
+
+    fn __system_fn_to_cstring(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        if args.len() != 1 {
+            return Err("as expects no one arguments".into());
+        }
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+        let mut string = if let SystemValue::String(ref v) = &evaluated_args[0] {
+            v.clone()
+        } else {
+            String::new()
+        };
+        let c_string = string.to_cstring();
+        return Ok(SystemValue::System(SystemType::CString(c_string.clone())));
+    }
+    fn __system_fn_printf(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        if args.len() != 2 {
+            return Err("printf expects no one arguments".into());
+        }
+        //panic!("{:?}",self.execute_node(&args[0])?);
+        let fmt = match self.execute_node(&args[0])? {
+            SystemValue::System(SystemType::CString(ref v)) => v.clone(),
+            _ => todo!(),
+        };
+        let string = match self.execute_node(&args[1])? {
+            SystemValue::System(SystemType::CString(ref v)) => v.clone(),
+            _ => todo!(),
+        };
+        unsafe {
+            libc::printf(fmt.as_ptr(), string.as_ptr());
+        }
+        return Ok(SystemValue::Null);
+    }
+
     fn __system_fn_file(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if !args.is_empty() {
             return Err("file expects no arguments".into());
@@ -1680,12 +1723,126 @@ impl Decoder {
         }
         return Ok(SystemValue::Null);
     }
+    fn __system_fn_dxlib_init(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        unsafe {
+            //let lib = libloading::Library::new("DxLib_x64.dll").unwrap();
 
+            let _lib = match self.execute_node(&args[0])? {
+                SystemValue::System(SystemType::Library(ref v)) => v.clone(),
+                _ => todo!(),
+            };
+            let mut lib = _lib.lock().unwrap();
+            // シンボルを取得する
+            let func: Symbol<unsafe extern "C" fn() -> i32> = lib.get(b"dx_DxLib_Init").unwrap();
+            // 関数を呼び出す
+            let res = func();
+            return Ok(res.into());
+        }
+    }
+    fn __system_fn_dxlib_end(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        unsafe {
+            // let lib = libloading::Library::new("DxLib_x64.dll").unwrap();
+            let _lib = match self.execute_node(&args[0])? {
+                SystemValue::System(SystemType::Library(ref v)) => v.clone(),
+                _ => todo!(),
+            };
+            let mut lib = _lib.lock().unwrap();
+
+            // シンボルを取得する
+            let func: Symbol<unsafe extern "C" fn() -> i32> = lib.get(b"dx_DxLib_End").unwrap();
+            // 関数を呼び出す
+            let res = func();
+            return Ok(res.into());
+        }
+    }
+
+    fn __system_fn_dxlib_process_message(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        unsafe {
+            // let lib = libloading::Library::new("DxLib_x64.dll").unwrap();
+            let _lib = match self.execute_node(&args[0])? {
+                SystemValue::System(SystemType::Library(ref v)) => v.clone(),
+                _ => todo!(),
+            };
+            let mut lib = _lib.lock().unwrap();
+
+            // シンボルを取得する
+            let func: Symbol<unsafe extern "C" fn() -> i32> =
+                lib.get(b"dx_ProcessMessage").unwrap();
+            // 関数を呼び出す
+            let res = func();
+            return Ok(res.into());
+        }
+    }
+    fn __system_fn_dxlib_change_window_mode(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        unsafe {
+            //           let lib = libloading::Library::new("DxLib_x64.dll").unwrap();
+            let _lib = match self.execute_node(&args[0])? {
+                SystemValue::System(SystemType::Library(ref v)) => v.clone(),
+                _ => todo!(),
+            };
+            let mut lib = _lib.lock().unwrap();
+
+            // シンボルを取得する
+            let func: Symbol<unsafe extern "C" fn(i32) -> i32> =
+                lib.get(b"dx_ChangeWindowMode").unwrap();
+            // 関数を呼び出す
+            let res = func(1);
+            return Ok(res.into());
+        }
+    }
+
+    fn __system_fn_load_library(&mut self, args: &Vec<Node>, node: &Node) -> Value {
+        let mut evaluated_args = Vec::new();
+        for arg in args.clone() {
+            let evaluated_arg = self.execute_node(&arg)?;
+            //debug!("args: {:?}", evaluated_arg);
+            evaluated_args.push(evaluated_arg);
+        }
+        let mut dll_path = String::new();
+        for value in &evaluated_args {
+            match value {
+                SystemValue::String(ref v) => {
+                    dll_path = v.clone();
+                }
+                _ => todo!(),
+            }
+        }
+        unsafe {
+            let lib = libloading::Library::new(&dll_path).unwrap();
+            return Ok(SystemValue::System(SystemType::Library(Arc::new(
+                Mutex::new(lib),
+            ))));
+        }
+    }
     fn register_system_all_functions(&mut self) {
         self.system_functions.insert(
             "func_lists".to_string(),
             Decoder::__system_fn_system_function_lists,
         );
+        {
+            self.system_functions.insert(
+                "load_library".to_string(),
+                Decoder::__system_fn_load_library,
+            );
+
+            self.system_functions
+                .insert("dx_init".to_string(), Decoder::__system_fn_dxlib_init);
+            self.system_functions.insert(
+                "dx_process_message".to_string(),
+                Decoder::__system_fn_dxlib_process_message,
+            );
+
+            self.system_functions
+                .insert("dx_end".to_string(), Decoder::__system_fn_dxlib_end);
+            self.system_functions.insert(
+                "dx_change_window".to_string(),
+                Decoder::__system_fn_dxlib_change_window_mode,
+            );
+        }
+        self.system_functions
+            .insert("to_cstring".to_string(), Decoder::__system_fn_to_cstring);
+        self.system_functions
+            .insert("printf".to_string(), Decoder::__system_fn_printf);
 
         self.system_functions
             .insert("sin".to_string(), Decoder::__system_fn_sin);
@@ -1809,8 +1966,7 @@ impl Decoder {
             let arg_addresses = &func_info_struct[0]; // 引数 (SystemValueで格納)
             let _body = &func_info_struct[1]; // 関数のbody (SystemValue::NodeBlockで格納)
             let _return_type = &func_info_struct[2]; // 戻り値の型 (SystemValue::NodeBlockで格納)
-
-            // body が SystemValue::NodeBlockであることを確認
+                                                     // body が SystemValue::NodeBlockであることを確認
             let body_array = if let SystemValue::__NodeBlock(ref body_elements) = *_body {
                 body_elements
             } else {

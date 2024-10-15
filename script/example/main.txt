@@ -1,20 +1,13 @@
 // tanucc-script[0.1]
 include "std"
+//use std::{*};
+
+/*
+extern "C"{
+    fn dx_DrawString(x:i32,y:i32,String:const p_i8,color:u32)->i32;
+}
+*/
 
 fn main(){
-/*
-   const PI =3.141592653589793;
-   const DEG = 180.0;
-    let a = 0;
-    let file_path = @to_path("std.txt");
-    let file = @open(file_path);
-    let contents = @read_file(file);
-    let s  =@as_ptr(file);
-    let aaa = 1.0;
-    let aaas = null;
-    let c = 10*(121*2);
-    //let r = @sin(10.1)*(PI/DEG);
-    Std::func_lists()
-*/
-   @cmd("mpv",[@to_path("C:/Users/tanukimaru/Downloads/sounds/*")])
+  
 }

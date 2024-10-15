@@ -201,18 +201,27 @@ impl Lexer {
                         break;
                     }
                 }
+
                 if !number.is_empty() {
-                    let value = if has_decimal_point {
-                        f64::from_str(&number).unwrap()
+                    // 小数点を含む場合は常に f64 として処理
+                    if has_decimal_point || base == 10 {
+                        //let value: f64 = f64::from_str(&number).unwrap();
+                        //panic!("{}", value);
+                        tokens.push(Token::new(
+                            number.to_string(),
+                            TokenType::Number,
+                            start_line,
+                            start_column,
+                        ));
                     } else {
-                        i64::from_str_radix(&number, base).unwrap() as f64
-                    };
-                    tokens.push(Token::new(
-                        value.to_string(),
-                        TokenType::Number,
-                        start_line,
-                        start_column,
-                    ));
+                        let value: i64 = i64::from_str_radix(&number, base).unwrap();
+                        tokens.push(Token::new(
+                            value.to_string(),
+                            TokenType::Number,
+                            start_line,
+                            start_column,
+                        ));
+                    }
                 }
             } else if c.is_alphanumeric() || c == '_' {
                 let mut ident = String::new();

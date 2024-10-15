@@ -409,7 +409,6 @@ impl<'a> Parser<'a> {
             self.current_token().unwrap().token_type(),
             TokenType::Add
                 | TokenType::Sub
-                | TokenType::Number
                 | TokenType::AddAssign
                 | TokenType::SubAssign
                 | TokenType::Increment
@@ -542,7 +541,20 @@ impl<'a> Parser<'a> {
                     node = *self.parse_member_access(&ident_token)?;
                     return Ok(Box::new(node));
                 }
-                if let Ok(number) = token.token_value().parse::<i64>() {
+
+                //   panic!("{}", token.token_value());
+                if token.token_value().contains(".") {
+                    if let Ok(number) = token.token_value().parse::<f64>() {
+                        self.next_token();
+                        node = Node::new(
+                            NodeValue::DataType(DataType::Float(number)),
+                            None,
+                            self.current_token().unwrap().line(),
+                            self.current_token().unwrap().column(),
+                        );
+                        return Ok(Box::new(node));
+                    }
+                } else if let Ok(number) = token.token_value().parse::<i64>() {
                     self.next_token();
                     node = Node::new(
                         NodeValue::DataType(DataType::Int(number)),
@@ -550,14 +562,7 @@ impl<'a> Parser<'a> {
                         self.current_token().unwrap().line(),
                         self.current_token().unwrap().column(),
                     );
-                } else if let Ok(number) = token.token_value().parse::<f64>() {
-                    self.next_token();
-                    node = Node::new(
-                        NodeValue::DataType(DataType::Float(number)),
-                        None,
-                        self.current_token().unwrap().line(),
-                        self.current_token().unwrap().column(),
-                    );
+                    return Ok(Box::new(node));
                 }
             }
 
@@ -724,10 +729,53 @@ impl<'a> Parser<'a> {
         // 二個目以降はself.exprを呼ぶ
         while self.current_token().unwrap().token_type() == TokenType::ScopeResolution {
             self.next_token(); // ::
+            if self.current_token().unwrap().token_type() == TokenType::LeftCurlyBrace {
+                let mut expr = Parser::<'a>::new_null(
+                    self.current_token().unwrap().line(),
+                    self.current_token().unwrap().column(),
+                );
+                self.next_token(); // {
+                while self.current_token().unwrap().token_type() != TokenType::RightCurlyBrace {
+                    if self.current_token().unwrap().token_type() == TokenType::Conma {
+                        self.next_token(); // ,
+                        continue;
+                    }
+                    if self.current_token().unwrap().token_type() == TokenType::Mul {
+                        self.next_token(); // *
+                        scope_resolution.push(Box::new(Node::new(
+                            NodeValue::DataType(DataType::String("*".to_string())),
+                            None,
+                            self.current_token().unwrap().line(),
+                            self.current_token().unwrap().column(),
+                        )));
+                        continue;
+                    }
+                    scope_resolution.push(self.expr()?);
+                }
+
+                if self.current_token().unwrap().token_type() == TokenType::RightCurlyBrace {
+                    self.next_token(); // }
+                }
+                return Ok(Box::new(Node::new(
+                    NodeValue::ScopeResolution(scope_resolution),
+                    None,
+                    self.current_token().unwrap().line(),
+                    self.current_token().unwrap().column(),
+                )));
+            }
+
             let scope = if self.peek_next_token(1).unwrap().token_type() == TokenType::LeftParen {
                 let ident_token = self.current_token().unwrap().clone();
                 self.next_token(); // ident
                 self.parse_function_call(ident_token, false)?
+            } else if self.current_token().unwrap().token_type() == TokenType::Mul {
+                self.next_token(); // *
+                Box::new(Node::new(
+                    NodeValue::DataType(DataType::String("*".to_string())),
+                    None,
+                    self.current_token().unwrap().line(),
+                    self.current_token().unwrap().column(),
+                ))
             } else {
                 self.expr()?
             };
@@ -1784,6 +1832,16 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_use(&mut self) -> R<Box<Node>, String> {
+        self.next_token(); // use
+        let scope_solution = self.expr()?;
+        return Ok(Box::new(Node::new(
+            NodeValue::Use(scope_solution),
+            None,
+            self.current_token().unwrap().line(),
+            self.current_token().unwrap().column(),
+        )));
+    }
     fn parse_member_access(&mut self, ident_token: &Token) -> R<Box<Node>, String> {
         let member = if let Ok(v) = ident_token.token_value().parse::<bool>() {
             Box::new(Node::new(
@@ -1859,6 +1917,8 @@ impl<'a> Parser<'a> {
             self.parse_callback_function_definition()
         } else if self.current_token().unwrap().token_value() == "struct" {
             self.parse_struct_definition()
+        } else if self.current_token().unwrap().token_value() == "use" {
+            self.parse_use()
         } else if self.current_token().unwrap().token_value() == "impl" {
             self.parse_impl_definition()
         } else if self.current_token().unwrap().token_value() == "fn" {
