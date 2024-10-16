@@ -9,10 +9,35 @@ use std::time::SystemTime;
 pub static RESERVED_WORDS: &[&str] = &[
     "if", "else", "while", "for", "break", "continue", "i32", "i64", "f32", "f64", "u32", "u64",
     "type", "let", "l", "var", "v", "fn", "mut", "loop", "=", "+", "++", "-", "--", "+=", "-=",
-    "*", "*=", "/", "/=", "{", "}", "[", "]", "mod", "use", "bool", "struct", "enum", "%", "&",
-    "&=", "|", "|=", "^", "~", "^=",
+    "*", "*=", "/", "/=", "{", "}", "[", "]", "mod", "use", "bool", "struct", "impl", "enum", "%",
+    "%=", "function", "module", "import", "&", "&=", "|", "|=", "^", "~", "^=",
 ];
+// キーワード
+pub struct Keywords;
+impl Keywords {
+    pub const DECLARATION_LET_KEYWORD: &'static [&'static str] = &["let", "l", "var", "v"];
+    pub const DECLARATION_STRUCT_KEYWORD: &'static [&'static str] = &["struct"];
+    pub const DECLARATION_IMPL_KEYWORD: &'static [&'static str] = &["impl"];
+    pub const DECLARATION_CONST_KEYWORD: &'static [&'static str] = &["const", "constant"];
 
+    pub const DECLARATION_TYPE_KEYWORD: &'static [&'static str] = &["type"];
+    pub const DECLARATION_FUNC_KEYWORD: &'static [&'static str] = &["fn", "func", "function"];
+    pub const DECLARATION_CALLBACK_FUNC_KEYWORD: &'static [&'static str] = &["callback"];
+    pub const CONTROL_FROW_IF_KEYWORD: &'static [&'static str] = &["if"];
+    pub const CONTROL_FROW_LOOP_KEYWORD: &'static [&'static str] = &["loop"];
+    pub const CONTROL_FROW_FOR_KEYWORD: &'static [&'static str] = &["for"];
+    pub const CONTROL_FROW_FOR_IN_KEYWORD: &'static [&'static str] = &["in"];
+
+    pub const CONTROL_FROW_WHILE_KEYWORD: &'static [&'static str] = &["while"];
+    pub const CONTROL_FROW_BREAK_KEYWORD: &'static [&'static str] = &["break"];
+
+    pub const CONTROL_FROW_RETURN_KEYWORD: &'static [&'static str] = &["return"];
+    pub const CONTROL_FROW_CONTINUE_KEYWORD: &'static [&'static str] = &["continue"];
+
+    pub const MODULE_USE_KEYWORD: &'static [&'static str] = &["use", "import"];
+    pub const MODULE_DECLARATION_KEYWORD: &'static [&'static str] = &["mod", "module"];
+    pub const ACCESS_PUB_KEYWORD: &'static [&'static str] = &["pub", "public"];
+}
 #[cfg(any(feature = "full", feature = "parser"))]
 use crate::parser::syntax::Node;
 use serde::{Deserialize, Serialize};
@@ -143,14 +168,21 @@ pub enum DataType {
 #[cfg(any(feature = "full", feature = "parser"))]
 #[derive(PartialEq, Debug, Clone)]
 pub enum Declaration {
-    Const(Box<Node>, Box<Node>, Box<Node>, bool), // 定数定義()
-    Variable(Box<Node>, Box<Node>, Box<Node>, bool, bool), // 変数定義()
-    Struct(String, Vec<Box<Node>>),               // 構造体定義()
-    Impl(String, Vec<Box<Node>>),                 // 構造体実装()
-    Function(String, Vec<(Box<Node>, String)>, Box<Node>, Box<Node>, bool), // 関数定義()
+    Const(Box<Node>, Box<Node>, Box<Node>, bool, bool), // 定数定義()
+    Variable(Box<Node>, Box<Node>, Box<Node>, bool, bool, bool), // 変数定義(変数,型,値,可変フラグ,参照フラグ,パブリックフラグ)
+    Struct(String, Vec<Box<Node>>, bool),                        // 構造体定義()
+    Impl(String, Vec<Box<Node>>),                                // 構造体実装()
+    Function(
+        String,
+        Vec<(Box<Node>, String)>,
+        Box<Node>,
+        Box<Node>,
+        bool,
+        bool,
+    ), // 関数定義(関数名,引数,戻り値の型,ボディ,システム関数フラグ,パブリックフラグ)
     CallBackFunction(String, Vec<(Box<Node>, String)>, Box<Node>, Box<Node>, bool), // コールバック関数定義()
-    Type(Box<Node>, Box<Node>), // 型定義,型エイリアス()
-                                //    Array(Box<Node>, Vec<Box<Node>>), // 配列(型名,値)
+    Type(Box<Node>, Box<Node>, bool),                                               // 型別名定義
+                                                                                    //    Array(Box<Node>, Vec<Box<Node>>), // 配列(型名,値)
 }
 
 // NodeValue

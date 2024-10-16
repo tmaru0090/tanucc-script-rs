@@ -27,40 +27,40 @@ type array = "array";
 type bool = "bool";
 
 
-struct Vector;
-struct HashMap;
-struct IO;
-struct File;
-struct Memory;
-struct __UTF8String{
+pub struct Vector;
+pub struct HashMap;
+pub struct IO;
+pub struct File;
+pub struct Memory;
+pub struct __UTF8String{
   value:&str,
 }
 impl __UTF8String{
   fn new(){
   }
 }
-struct String{
+pub struct String{
 }
 impl String{
 }
-struct Math{
+pub struct Math{
   value:i32,
 }
 impl Math{
 }
-struct Std{
+pub struct Std{
 }
 impl Std{
-    fn line(){
+    pub fn line(){
       @line()
     }
-    fn column(){
+    pub fn column(){
       @column()
     }
-    fn func_lists(){
+    pub fn func_lists(){
       @func_lists()
     }
-    fn file(){
+    pub fn file(){
       @file()
     }
 }

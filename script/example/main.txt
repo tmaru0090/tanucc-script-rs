@@ -1,13 +1,9 @@
 // tanucc-script[0.1]
-include "std"
-//use std::{*};
+//include "std"
 
-/*
-extern "C"{
-    fn dx_DrawString(x:i32,y:i32,String:const p_i8,color:u32)->i32;
-}
-*/
+use std::{*};
+use test::{*};
 
 fn main(){
-  
+    Std::file()
 }

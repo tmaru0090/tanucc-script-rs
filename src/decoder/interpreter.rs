@@ -47,6 +47,7 @@ use symphonia::default::get_codecs;
 use symphonia::default::get_probe;
 use uuid::Uuid;
 use whoami;
+#[cfg(target_os = "windows")]
 use win_msgbox::{
     AbortRetryIgnore, CancelTryAgainContinue, Icon, MessageBox, Okay, OkayCancel, RetryCancel,
     YesNo, YesNoCancel,
@@ -81,7 +82,7 @@ fn get_duration(file_path: &str) -> Option<Duration> {
 
     Some(duration)
 }
-
+#[cfg(target_os = "windows")]
 fn show_messagebox(
     message_type: &str,
     title: &str,
@@ -717,29 +718,6 @@ impl Decoder {
                 self.register_system_all_functions();
             }
         }
-        /*
-                for (file_name, node) in ast_map_clone.iter() {
-                    if evaluated_files.contains(file_name) {
-                        continue; // 既に評価済みのファイルはスキップ
-                    }
-                    evaluated_files.insert(file_name.clone());
-
-                    self.current_node = Some((file_name.clone(), Box::new(Node::default())));
-                    let content = std::fs::read_to_string(file_name.clone()).map_err(|e| e.to_string())?;
-                    self.file_contents.insert(file_name.clone(), content);
-
-                    // Nodeのイテレータを使用してノードを処理
-                    for current_node in node.iter() {
-                        self.current_node = Some((file_name.clone(), Box::new(current_node.clone())));
-                        if let NodeValue::EndStatement | NodeValue::Null = current_node.value {
-                            continue;
-                        }
-                        value = self.execute_node(current_node)?;
-                    }
-                    // 最後のノードも評価する（イテレータ内で自動処理されるため不要）
-                }
-        */
-
         // Nodeのイテレータを使用してノードを処理
         for (file_name, node) in ast_map_clone.iter() {
             if evaluated_files.contains(file_name) {
@@ -863,7 +841,126 @@ impl Decoder {
         Ok(result)
     }
 
-    fn eval_use(&mut self, file_name: &String) -> Result<SystemValue, String> {
+    fn eval_use(&mut self, scope_resolution: &Box<Node>) -> Result<SystemValue, String> {
+        let mut imports = match scope_resolution.value {
+            NodeValue::ScopeResolution(ref v) => v.clone(),
+            _ => todo!(),
+        };
+        let mut first_mod_name = String::new();
+        debug!("Use imports {:?}", imports);
+        for (i, import) in imports.iter().enumerate() {
+            match import.value {
+                NodeValue::ScopeResolution(ref v) => {
+                    if i == 0 {
+                        let mods = v.clone();
+                        for _mod in &mods {
+                            first_mod_name = match &_mod.value {
+                                NodeValue::Variable(_, ref name, _, _, _) => name.clone(),
+                                _ => todo!(),
+                            };
+                        }
+                    }
+                    debug!("Use import name: {:?}", v.clone());
+                }
+                NodeValue::DataType(DataType::String(ref v)) => {
+                    if !first_mod_name.is_empty() {
+                        first_mod_name.push_str(".txt");
+                        let file_name = first_mod_name.clone();
+                        let content =
+                            std::fs::read_to_string(&file_name).map_err(|e| e.to_string())?;
+                        let tokens = Lexer::from_tokenize(&file_name, content.clone())?;
+                        let _nodes = Parser::from_parse(&tokens, &file_name, content.clone())?;
+                        //        panic!("{:?}", _nodes);
+                        // 公開された変数のみをフィルタリング
+                        let mut public_nodes: Vec<Rc<RefCell<Node>>> = _nodes
+                            .iter()
+                            .filter(|node| match &node.borrow().value {
+                                NodeValue::Declaration(Declaration::Variable(
+                                    _,
+                                    _,
+                                    _,
+                                    _,
+                                    _,
+                                    ref _is_public,
+                                )) => {
+                                    let is_public = *_is_public;
+                                    //debug!("{:?}", is_public);
+                                    is_public
+                                }
+                                //  Function(String,Vec<(Box<Node>, String)>,Box<Node>,Box<Node>,bool ,bool,), // 関数定義(関数名,引数,戻り値の型,ボディ,システム関数フラグ,パブリックフラグ)
+                                NodeValue::Declaration(Declaration::Function(
+                                    _,
+                                    _,
+                                    _,
+                                    _,
+                                    _,
+                                    ref _is_public,
+                                )) => {
+                                    let is_public = *_is_public;
+                                    //debug!("{:?}", is_public);
+                                    is_public
+                                }
+                                NodeValue::Declaration(Declaration::Struct(
+                                    _,
+                                    _,
+                                    ref _is_public,
+                                )) => {
+                                    let is_public = *_is_public;
+                                    //debug!("{:?}", is_public);
+                                    is_public
+                                }
+                                NodeValue::Declaration(Declaration::Impl(_, ref members)) => {
+                                    let mut is_public = false;
+                                    for member in members {
+                                        match member.value {
+                                            NodeValue::Declaration(Declaration::Function(
+                                                _,
+                                                _,
+                                                _,
+                                                _,
+                                                _,
+                                                ref _is_public,
+                                            )) => {
+                                                is_public = *_is_public;
+                                                //debug!("{:?}", is_public);
+                                            }
+                                            _ => (),
+                                        }
+                                    }
+
+                                    is_public
+                                }
+
+                                _ => false,
+                            })
+                            .map(|node| Rc::clone(&node))
+                            .collect();
+                        //public_nodes.reverse();
+                        //debug!("{:?}",public_nodes);
+                        if !public_nodes.is_empty() {
+                            let boxed_node: Box<Node> = Box::from(
+                                public_nodes
+                                    .iter()
+                                    .map(|v| v.borrow().clone())
+                                    .collect::<Vec<Node>>(),
+                            );
+                            self.ast_map.insert(file_name.to_string(), boxed_node);
+
+                            let _node = self.ast_map.get(&file_name).unwrap();
+                            self.current_node = Some((file_name.clone(), _node.clone()));
+
+                            let mut result = SystemValue::Null;
+                            for node in _node.iter() {
+                                let node = node.borrow();
+                                result = self.execute_node(&*node)?;
+                            }
+                            return Ok(result);
+                        }
+                    }
+                }
+                _ => todo!(),
+            }
+        }
         return Ok(SystemValue::Null);
     }
 
@@ -1045,6 +1142,7 @@ impl Decoder {
         body: &Box<Node>,
         return_type: &Box<Node>,
         is_system: &bool,
+        is_public: &bool,
     ) -> Value {
         debug!(
             "eval_function: name: {:?} args: {:?} body: {:?} return_type: {:?} is_system: {:?}",
@@ -1125,8 +1223,8 @@ impl Decoder {
         );
 
         debug!(
-            "FunctionDeclaration: name = {:?}, args = {:?}, body = {:?}, return_type = {:?}",
-            func_name, arg_addresses, body, return_type
+            "FunctionDeclaration: is_public = {:?}, name = {:?}, args = {:?}, body = {:?}, return_type = {:?}",
+            is_public,func_name, arg_addresses, body, return_type
         );
         Ok(SystemValue::Null)
     }
@@ -1329,6 +1427,7 @@ impl Decoder {
         let string = n.to_string();
         return Ok(string.into());
     }
+    #[cfg(target_os = "windows")]
     fn __system_fn_show_msg_box(&mut self, args: &Vec<Node>, node: &Node) -> Value {
         if args.len() != 4 {
             return Err("show_msg_box expects exactly two arguments".into());
@@ -2060,6 +2159,7 @@ impl Decoder {
         data_type: &Box<Node>,
         value: &Box<Node>,
         is_local: &bool,
+        is_public: &bool,
     ) -> Value {
         // ステートメントフラグのチェック
         if !node.is_statement() {
@@ -2209,7 +2309,7 @@ impl Decoder {
             );
         }
 
-        debug!("Const Declaration: name = {:?}, data_type = {:?}, value = {:?}, address = {:?} size = {:?} is_local: {} value_is_reference: {:?}", name, v_type, v_value, address,v_value.size(),is_local,value_is_reference);
+        debug!("Const Declaration: is_public={:?}, name = {:?}, data_type = {:?}, value = {:?}, address = {:?} size = {:?} is_local: {} value_is_reference: {:?}",is_public, name, v_type, v_value, address,v_value.size(),is_local,value_is_reference);
         let line = self.current_node.clone().unwrap().1.line();
         let column = self.current_node.clone().unwrap().1.column();
         self.context
@@ -2226,6 +2326,7 @@ impl Decoder {
         value: &Box<Node>,
         is_local: &bool,
         is_mutable: &bool,
+        is_public: &bool,
     ) -> Value {
         // ステートメントフラグのチェック
         if !node.is_statement() {
@@ -2379,7 +2480,7 @@ impl Decoder {
             );
         }
 
-        debug!("VariableDeclaration: name = {:?}, data_type = {:?}, value = {:?}, address = {:?} size = {:?} is_mutable: {} is_local: {} value_is_mutable: {:?} value_is_reference: {:?}", name, v_type, v_value, address,v_value.size(),is_mutable,is_local,value_is_mutable,value_is_reference);
+        debug!("VariableDeclaration: is_public = {:?}, name = {:?}, data_type = {:?}, value = {:?}, address = {:?} size = {:?} is_mutable: {} is_local: {} value_is_mutable: {:?} value_is_reference: {:?}", is_public,name, v_type, v_value, address,v_value.size(),is_mutable,is_local,value_is_mutable,value_is_reference);
         let line = self.current_node.clone().unwrap().1.line();
         let column = self.current_node.clone().unwrap().1.column();
         self.context
@@ -2388,7 +2489,12 @@ impl Decoder {
         Ok(v_value)
     }
 
-    fn eval_type_declaration(&mut self, _type_name: &Box<Node>, _type: &Box<Node>) -> Value {
+    fn eval_type_declaration(
+        &mut self,
+        _type_name: &Box<Node>,
+        _type: &Box<Node>,
+        is_public: bool,
+    ) -> Value {
         let name = match _type_name.value() {
             NodeValue::Variable(_, v, _, _, _) => v,
             _ => String::new(),
@@ -2420,8 +2526,8 @@ impl Decoder {
             .insert(name.clone(), v_type.clone());
 
         debug!(
-            "TypeDeclaration: type_name = {:?}, type = {:?}",
-            name, v_type
+            "TypeDeclaration: is_public = {:?}, type_name = {:?}, type = {:?}",
+            is_public, name, v_type
         );
         Ok(SystemValue::String(name.into()))
     }
@@ -2473,7 +2579,18 @@ impl Decoder {
                 .expect("Failed to retrieve value");
             Ok(value.clone())
         } else {
-            Ok(SystemValue::Null)
+            Err(compile_error!(
+                "error",
+                self.current_node.clone().unwrap().1.line(),
+                self.current_node.clone().unwrap().1.column(),
+                &self.current_node.clone().unwrap().0,
+                &self
+                    .file_contents
+                    .get(&self.current_node.clone().unwrap().0)
+                    .unwrap(),
+                "Cannot find value {:?} in this scope",
+                name.clone(),
+            ))
         }
     }
     fn eval_return(&mut self, ret: &Box<Node>) -> Value {
@@ -3105,6 +3222,7 @@ impl Decoder {
                         body,
                         return_type,
                         _is_system,
+                        is_public,
                     )) => {
                         let member_name = func_name.clone();
                         // 関数の引数、戻り値の型と本体を取得
@@ -3114,6 +3232,7 @@ impl Decoder {
                                     .map(|(arg, _)| SystemValue::__NodeBlock(vec![arg.clone()]))
                                     .collect(),
                             ),
+                            SystemValue::Bool(*is_public),
                             SystemValue::__NodeBlock(vec![return_type.clone()]),
                             SystemValue::__NodeBlock(vec![body.clone()]),
                         ]);
@@ -3150,7 +3269,13 @@ impl Decoder {
         );
         Ok(updated_struct)
     }
-    fn eval_struct_statement(&mut self, name: &String, members: &Vec<Box<Node>>) -> Value {
+    fn eval_struct_statement(
+        &mut self,
+        name: &String,
+        members: &Vec<Box<Node>>,
+
+        is_public: bool,
+    ) -> Value {
         let context = &mut self.context.global_context;
         if context.contains_key(&name.clone()) {
             return Err(compile_error!(
@@ -3541,6 +3666,17 @@ impl Decoder {
         let context = &mut self.context.global_context;
         let first_name = match scope_resolution[0].value {
             NodeValue::Variable(_, ref v, _, _, _) => v.clone(),
+
+            NodeValue::ScopeResolution(ref scope) => {
+                let mut name = String::new();
+                for s in scope {
+                    name = match s.value {
+                        NodeValue::Variable(_, ref v, _, _, _) => v.clone(),
+                        _ => return Err("Invalid scope resolution".to_string()),
+                    };
+                }
+                name
+            }
             _ => return Err("Invalid scope resolution".to_string()),
         };
 
@@ -3710,6 +3846,10 @@ impl Decoder {
             NodeValue::Block(block) => {
                 result = self.eval_block(&block)?;
             }
+            NodeValue::Use(scope_resolution) => {
+                result = self.eval_use(scope_resolution)?;
+            }
+
             NodeValue::ScopeResolution(scope_resolution) => {
                 result = self.eval_scope_resolution(&scope_resolution)?;
             }
@@ -3720,8 +3860,8 @@ impl Decoder {
             NodeValue::StructInstance(name, init_values) => {
                 result = self.eval_struct_instance_statement(name, &init_values)?;
             }
-            NodeValue::Declaration(Declaration::Struct(name, members)) => {
-                result = self.eval_struct_statement(name, &members)?;
+            NodeValue::Declaration(Declaration::Struct(name, members, is_public)) => {
+                result = self.eval_struct_statement(name, &members, *is_public)?;
             }
 
             NodeValue::MemberAccess(member, item) => {
@@ -3830,8 +3970,8 @@ impl Decoder {
             NodeValue::Call(name, args, is_system) => {
                 result = self.eval_call(&node.clone(), name, args, is_system)?;
             }
-            NodeValue::Declaration(Declaration::Type(type_name, _type)) => {
-                result = self.eval_type_declaration(type_name, _type)?;
+            NodeValue::Declaration(Declaration::Type(type_name, _type, is_public)) => {
+                result = self.eval_type_declaration(type_name, _type, *is_public)?;
             }
             NodeValue::Variable(_, name, _, _, _) => {
                 result = self.eval_variable(name)?;
@@ -3863,8 +4003,9 @@ impl Decoder {
                 body,
                 return_type,
                 is_system,
+                is_public,
             )) => {
-                result = self.eval_function(name, args, body, return_type, is_system)?;
+                result = self.eval_function(name, args, body, return_type, is_system, is_public)?;
             }
 
             NodeValue::Assign(var_name, value, index) => {
@@ -3877,6 +4018,7 @@ impl Decoder {
                 value,
                 is_local,
                 is_mutable,
+                is_public,
             )) => {
                 result = self.eval_variable_declaration(
                     &node.clone(),
@@ -3885,16 +4027,24 @@ impl Decoder {
                     value,
                     is_local,
                     is_mutable,
+                    is_public,
                 )?;
             }
 
-            NodeValue::Declaration(Declaration::Const(var_name, data_type, value, is_local)) => {
+            NodeValue::Declaration(Declaration::Const(
+                var_name,
+                data_type,
+                value,
+                is_local,
+                is_public,
+            )) => {
                 result = self.eval_const_declaration(
                     &node.clone(),
                     var_name,
                     data_type,
                     value,
                     is_local,
+                    is_public,
                 )?;
             }
 

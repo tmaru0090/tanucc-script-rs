@@ -254,6 +254,7 @@ impl<'a> Parser<'a> {
         body: Box<Node>,
         return_type: Box<Node>,
         is_system: bool,
+        is_public: bool,
         line: usize,
         column: usize,
     ) -> Box<Node> {
@@ -264,6 +265,7 @@ impl<'a> Parser<'a> {
                 body,
                 return_type,
                 is_system,
+                is_public,
             )),
             None,
             line,
@@ -711,21 +713,19 @@ impl<'a> Parser<'a> {
 
     fn parse_scope_resolution(&mut self, ident_token: &Token) -> R<Box<Node>, String> {
         let mut scope_resolution = vec![];
-
-        // 最初のトークンはident_tokenをVariableとして扱う
+        //pub fn new_variable(name: String, expr: Box<Node>, line: usize, column: usize) -> Box<Node> {
+        // 最初のトークンはident_tokenを
         scope_resolution.push(Box::new(Node::new(
-            NodeValue::Variable(
+            NodeValue::ScopeResolution(vec![Parser::<'a>::new_variable(
+                ident_token.token_value(),
                 Parser::<'a>::new_null(ident_token.line(), ident_token.column()),
-                ident_token.token_value().clone(),
-                false,
-                false,
-                None,
-            ),
+                ident_token.line(),
+                ident_token.column(),
+            )]),
             None,
             ident_token.line(),
             ident_token.column(),
         )));
-
         // 二個目以降はself.exprを呼ぶ
         while self.current_token().unwrap().token_type() == TokenType::ScopeResolution {
             self.next_token(); // ::
@@ -880,7 +880,7 @@ impl<'a> Parser<'a> {
         Ok(Box::new(Node::default()))
     }
 
-    fn parse_function_definition(&mut self) -> R<Box<Node>, String> {
+    fn parse_function_definition(&mut self, is_public: bool) -> R<Box<Node>, String> {
         self.next_token(); // 'fn' をスキップ
         let mut is_system = false;
         if self.current_token().unwrap().token_type() == TokenType::AtSign {
@@ -932,6 +932,7 @@ impl<'a> Parser<'a> {
                 Box::new(*body),
                 return_type,
                 is_system,
+                is_public,
             )),
             None,
             self.current_token().unwrap().line(),
@@ -1249,7 +1250,7 @@ impl<'a> Parser<'a> {
         )))
     }
 
-    fn parse_type_declaration(&mut self) -> R<Box<Node>, String> {
+    fn parse_type_declaration(&mut self, is_public: bool) -> R<Box<Node>, String> {
         self.next_token(); // type
         let _type_name = self.current_token().unwrap().token_value().clone();
         self.next_token(); // name
@@ -1274,6 +1275,7 @@ impl<'a> Parser<'a> {
                     self.current_token().unwrap().column(),
                 )),
                 value_node,
+                is_public,
             )),
             next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
             line: self.current_token().unwrap().line(),
@@ -1282,7 +1284,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    fn parse_const_declaration(&mut self) -> R<Box<Node>, String> {
+    fn parse_const_declaration(&mut self, is_public: bool) -> R<Box<Node>, String> {
         self.next_token();
         let var = self.current_token().unwrap().token_value().clone();
         let mut data_type = Box::new(Node::new(
@@ -1338,6 +1340,7 @@ impl<'a> Parser<'a> {
                     data_type,
                     value_node,
                     is_local,
+                    is_public,
                 )),
                 next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
@@ -1385,6 +1388,7 @@ impl<'a> Parser<'a> {
                     data_type,
                     value_node,
                     is_local,
+                    is_public,
                 )),
                 next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
@@ -1430,6 +1434,7 @@ impl<'a> Parser<'a> {
                 data_type,
                 value_node,
                 is_local,
+                is_public,
             )),
             next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
             line: self.current_token().unwrap().line(),
@@ -1437,7 +1442,7 @@ impl<'a> Parser<'a> {
             is_statement: self.is_statement,
         }));
     }
-    fn parse_variable_declaration(&mut self) -> R<Box<Node>, String> {
+    fn parse_variable_declaration(&mut self, is_public: bool) -> R<Box<Node>, String> {
         self.next_token();
         let mut is_mutable = false;
         if let Some(token) = self.current_token() {
@@ -1501,6 +1506,7 @@ impl<'a> Parser<'a> {
                     value_node,
                     is_local,
                     is_mutable,
+                    is_public,
                 )),
                 next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
@@ -1549,6 +1555,7 @@ impl<'a> Parser<'a> {
                     value_node,
                     is_local,
                     is_mutable,
+                    is_public,
                 )),
                 next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
                 line: self.current_token().unwrap().line(),
@@ -1595,6 +1602,7 @@ impl<'a> Parser<'a> {
                 value_node,
                 is_local,
                 is_mutable,
+                is_public,
             )),
             next: Rc::new(RefCell::new(None)), // nextをRc<RefCell<Option<Box<Node>>>>で初期化
             line: self.current_token().unwrap().line(),
@@ -1734,7 +1742,7 @@ impl<'a> Parser<'a> {
 
         Ok(Box::new(include_node))
     }
-    fn parse_impl_definition(&mut self) -> R<Box<Node>, String> {
+    fn parse_impl_definition(&mut self, is_public: bool) -> R<Box<Node>, String> {
         self.next_token(); // impl
         let var = self.current_token().unwrap().token_value().clone();
         let mut member: Vec<Box<Node>> = Vec::new();
@@ -1791,7 +1799,7 @@ impl<'a> Parser<'a> {
             self.current_token().unwrap().column(),
         )))
     }
-    fn parse_struct_definition(&mut self) -> R<Box<Node>, String> {
+    fn parse_struct_definition(&mut self, is_public: bool) -> R<Box<Node>, String> {
         self.next_token(); // struct
         let var = self.current_token().unwrap().token_value().clone();
         let mut member: Vec<Box<Node>> = Vec::new();
@@ -1808,7 +1816,7 @@ impl<'a> Parser<'a> {
             }
             self.next_token(); // }
             Ok(Box::new(Node::new(
-                NodeValue::Declaration(Declaration::Struct(var.clone(), member.clone())),
+                NodeValue::Declaration(Declaration::Struct(var.clone(), member.clone(), is_public)),
                 None,
                 self.current_token().unwrap().line(),
                 self.current_token().unwrap().column(),
@@ -1824,6 +1832,7 @@ impl<'a> Parser<'a> {
                         self.current_token().unwrap().line(),
                         self.current_token().unwrap().column(),
                     )],
+                    is_public,
                 )),
                 None,
                 self.current_token().unwrap().line(),
@@ -1913,44 +1922,68 @@ impl<'a> Parser<'a> {
         Ok(Box::new(Node::default()))
     }
     pub fn parse_single_statement(&mut self) -> Option<R<Box<Node>, String>> {
-        let result = if self.current_token().unwrap().token_value() == "callback" {
+        let mut is_public = false;
+        if (Keywords::ACCESS_PUB_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
+            self.next_token();
+            is_public = true;
+        }
+        let result = if (Keywords::DECLARATION_CALLBACK_FUNC_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
             self.parse_callback_function_definition()
-        } else if self.current_token().unwrap().token_value() == "struct" {
-            self.parse_struct_definition()
-        } else if self.current_token().unwrap().token_value() == "use" {
+        } else if (Keywords::DECLARATION_STRUCT_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
+            self.parse_struct_definition(is_public)
+        } else if (Keywords::MODULE_USE_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
             self.parse_use()
-        } else if self.current_token().unwrap().token_value() == "impl" {
-            self.parse_impl_definition()
-        } else if self.current_token().unwrap().token_value() == "fn" {
-            self.parse_function_definition()
-        } else if self.current_token().unwrap().token_value() == "while" {
+        } else if (Keywords::DECLARATION_IMPL_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
+            self.parse_impl_definition(is_public)
+        } else if (Keywords::DECLARATION_FUNC_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
+            self.parse_function_definition(is_public)
+        } else if (Keywords::CONTROL_FROW_WHILE_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
             self.parse_while_statement()
-        } else if self.current_token().unwrap().token_value() == "if" {
+        } else if (Keywords::CONTROL_FROW_IF_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
             self.parse_if_statement()
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
-            && self.current_token().unwrap().token_value() == "for"
-            && self.peek_next_token(2).unwrap().token_value() == "in"
+            && (Keywords::CONTROL_FROW_FOR_KEYWORD
+                .contains(&&self.current_token().unwrap().token_value().as_str()))
+            && (Keywords::CONTROL_FROW_FOR_IN_KEYWORD
+                .contains(&&self.peek_next_token(2).unwrap().token_value().as_str()))
         {
             self.parse_for_statement()
-        } else if self.current_token().unwrap().token_value() == "loop" {
+        } else if (Keywords::CONTROL_FROW_LOOP_KEYWORD
+            .contains(&&self.current_token().unwrap().token_value().as_str()))
+        {
             self.parse_loop_statement()
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
-            && (self.current_token().unwrap().token_value() == "let"
-                || self.current_token().unwrap().token_value() == "var"
-                || self.current_token().unwrap().token_value() == "l"
-                || self.current_token().unwrap().token_value() == "v")
+            && (Keywords::DECLARATION_LET_KEYWORD
+                .contains(&&self.current_token().unwrap().token_value().as_str()))
         {
-            self.parse_variable_declaration()
+            self.parse_variable_declaration(is_public)
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
-            && (self.current_token().unwrap().token_value() == "const"
-                || self.current_token().unwrap().token_value() == "constant")
+            && (Keywords::DECLARATION_CONST_KEYWORD
+                .contains(&&self.current_token().unwrap().token_value().as_str()))
         {
-            self.parse_const_declaration()
+            self.parse_const_declaration(is_public)
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
             && self.peek_next_token(2).unwrap().token_type() == TokenType::Equals
-            && self.current_token().unwrap().token_value() == "type"
+            && (Keywords::DECLARATION_TYPE_KEYWORD
+                .contains(&&self.current_token().unwrap().token_value().as_str()))
         {
-            self.parse_type_declaration()
+            self.parse_type_declaration(is_public)
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
             && self.peek_next_token(1).unwrap().token_type() == TokenType::Equals
             || self.current_token().unwrap().token_type() == TokenType::Ident
@@ -1958,18 +1991,23 @@ impl<'a> Parser<'a> {
         {
             self.parse_assign_variable()
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
-            && self.current_token().unwrap().token_value() == "return"
+            && (Keywords::CONTROL_FROW_RETURN_KEYWORD
+                .contains(&&self.current_token().unwrap().token_value().as_str()))
         {
             self.parse_return()
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
-            && self.current_token().unwrap().token_value() == "break"
+            && (Keywords::CONTROL_FROW_BREAK_KEYWORD
+                .contains(&&self.current_token().unwrap().token_value().as_str()))
         {
             self.parse_break()
         } else if self.current_token().unwrap().token_type() == TokenType::Ident
-            && self.current_token().unwrap().token_value() == "continue"
+            && (Keywords::CONTROL_FROW_CONTINUE_KEYWORD
+                .contains(&&self.current_token().unwrap().token_value().as_str()))
         {
             self.parse_continue()
-        } else if self.current_token().unwrap().token_type() == TokenType::Ident
+        }
+        // 途中で廃止
+        else if self.current_token().unwrap().token_type() == TokenType::Ident
             && self.current_token().unwrap().token_value() == "include"
         {
             self.parse_include()

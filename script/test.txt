@@ -1,0 +1,8 @@
+// tanucc-script[0.1]
+//include "example/test2"
+
+pub let file2 = @file();
+ 
+pub let file2_line = @line();
+
+pub let file3_line = @line();
