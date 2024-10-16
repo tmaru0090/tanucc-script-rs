@@ -1,9 +1,10 @@
 // tanucc-script[0.1]
-//include "std"
-
 use std::{*};
-use test::{*};
+
 
 fn main(){
-    Std::file()
+    //let f = Std::file();
+    let file = @open(@to_path("example/main.txt"));
+    let content = @read_file(file);
+    //@play_music("test-dir/pokemon-bw-syouri-mokuzen.wav");
 }

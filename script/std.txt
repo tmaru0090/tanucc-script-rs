@@ -1,30 +1,30 @@
 // たぬぅスクリプト[0.1]
 
 // std.script
-type u8 = "u8";
-type u16 = "u16";
-type u32 = "u32";
-type u64 = "u64";
-type i8 = "i8";
-type i16 = "i16";
-type i32 = "i32";
-type i64 = "i64";
-type f32 = "f32";
+pub pub type u8 = "u8";
+pub pub type u16 = "u16";
+pub pub type u32 = "u32";
+pub pub type u64 = "u64";
+pub pub type i8 = "i8";
+pub type i16 = "i16";
+pub type i32 = "i32";
+pub type i64 = "i64";
+pub type f32 = "f32";
 
-type p_u8 = "pu8";
-type p_u16 = "pu16";
-type p_u32 = "pu32";
-type p_u64 = "pu64";
-type p_i8 = "pi8";
-type p_i16 = "pi16";
-type p_i32 = "pi32";
-type p_i64 = "pi64";
-type p_f32 = "pf32";
+pub type p_u8 = "pu8";
+pub type p_u16 = "pu16";
+pub type p_u32 = "pu32";
+pub type p_u64 = "pu64";
+pub type p_i8 = "pi8";
+pub type p_i16 = "pi16";
+pub type p_i32 = "pi32";
+pub type p_i64 = "pi64";
+pub type p_f32 = "pf32";
 
-type string = "string";
-type void = "unit";
-type array = "array";
-type bool = "bool";
+pub type string = "string";
+pub type void = "unit";
+pub type array = "array";
+pub type bool = "bool";
 
 
 pub struct Vector;
@@ -57,10 +57,11 @@ impl Std{
     pub fn column(){
       @column()
     }
-    pub fn func_lists(){
-      @func_lists()
-    }
     pub fn file(){
       @file()
     }
-}
+
+    pub fn func_lists(){
+      @func_lists()
+    }
+ }

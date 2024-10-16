@@ -6,4 +6,5 @@ pub mod lexer;
 pub mod memory_mgr;
 pub mod parser;
 pub mod traits;
+pub mod type_checker;
 pub mod types;
